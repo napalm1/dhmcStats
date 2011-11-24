@@ -46,6 +46,13 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 		catch ( SQLException e ) {
 			e.printStackTrace();
 		}
+        
+        try {
+			plugin.checkForums(player);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     
     

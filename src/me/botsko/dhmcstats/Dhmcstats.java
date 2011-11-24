@@ -11,15 +11,20 @@ package me.botsko.dhmcstats;
  * 
  * Version 0.1
  * - Player join/quit listeners logging the timestamps
- * 0.1.1:
- * - : Added playtime calculations on quit event
- * - : Adding core playtime reading function
+ * Version 0.1.1
+ * - Added playtime calculations on quit event
+ * - Added core playtime reading function
+ * - Added forum registration check to alert user on join
+ * - Added total/today/joined player stats command
+ * 
+ * BUGS:
+ * - We need to force-calc playtime onenable
+ * - Commands need to be accessible from console
  * 
  * 
  * FUTURE:
  * 
- * - Check if the user has registered for the forums, alert them on join
- * - Take over tracking of playtime (ignoring AFK time)
+ * - Add current playtime to calc for up-to-the-minute numbers
  * - Alert lead moderators when a user qualifies for a promotion
  * - Add commands to see if a player is online
  * - Reward users who sign up for the forums with something, or who post replies
@@ -41,6 +46,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
@@ -80,11 +86,25 @@ public class Dhmcstats extends JavaPlugin {
      */
 	public void onEnable(){
 		
-		// @todo look for any null records, assume they're from a crash, fill in time as now
-		
 		log.info("[Dhmcstats]: Initializing player listeners");
-		
 		dbc();
+	
+        // Force a timestamp for any null player_quits, which should only
+		// happen if the server crashed and the player_quit even never fired. Since
+		// we auto-reboot it's fairly safe to assume to the quit time isn't very far off.
+        try {
+        	java.util.Date date= new java.util.Date();
+            String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
+			String s = String.format("UPDATE joins SET player_quit = '%s' WHERE player_quit IS NULL", ts);
+	        PreparedStatement pstmt = c.prepareStatement(s);
+	        pstmt.executeUpdate();
+	        
+	        // @todo we also need to force a playtime calculation
+	        
+		}
+		catch ( SQLException e ) {
+			e.printStackTrace();
+		}
 		
 		PluginManager pm = this.getServer().getPluginManager();
 		pm.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Event.Priority.Normal, this);
@@ -124,6 +144,8 @@ public class Dhmcstats extends JavaPlugin {
     		player = (Player) sender;
     	}
     	
+    	
+    	// /played [player]
     	if (command.getName().equalsIgnoreCase("played")){
     		try {
     			if(permissions.has(player, "dhmcstats.played")){
@@ -134,6 +156,19 @@ public class Dhmcstats extends JavaPlugin {
 			}
     		return true;
     	}
+    	
+    	// /playerstats
+    	if (command.getName().equalsIgnoreCase("playerstats")){
+    		try {
+    			if(permissions.has(player, "dhmcstats.playerstats")){
+    				checkPlayerCounts( sender );
+    			}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+    		return true;
+    	}
+    	
     	return false;
     }
     
@@ -165,6 +200,85 @@ public class Dhmcstats extends JavaPlugin {
 			sender.sendMessage(ChatColor.GOLD + "You've played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
 			
 		}
+		
+		rs.close();
+		
+    }
+    
+    
+    /**
+     * Checks the total playtime of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     */
+    public void checkPlayerCounts(CommandSender sender) throws SQLException{
+    	
+    	
+    	// Pull how many players joined in total
+		PreparedStatement s;
+		s = c.prepareStatement ("SELECT COUNT( id ) FROM `mc_users`");
+		s.executeQuery();
+		ResultSet rs = s.getResultSet();
+		
+		Integer total = 0;
+		while( rs.next() ){
+			total = rs.getInt(1);
+		}
+    	
+    	// Pull how many players were online today
+		PreparedStatement s1;
+		s1 = c.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
+		s1.executeQuery();
+		ResultSet rs1 = s1.getResultSet();
+		
+		Integer playedtoday = 0;
+		while( rs1.next() ){
+			playedtoday = rs1.getInt(1);
+		}
+		
+		// Pull how many players joined
+		PreparedStatement s2;
+		s2 = c.prepareStatement ("SELECT COUNT( id ) FROM `mc_users` WHERE DATE_FORMAT(firstseen,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
+		s2.executeQuery();
+		ResultSet rs2 = s2.getResultSet();
+		
+		Integer joinedtoday = 0;
+		while( rs1.next() ){
+			joinedtoday = rs2.getInt(1);
+		}
+		
+		sender.sendMessage(ChatColor.GOLD  + "Total Players: " + total);
+		sender.sendMessage(ChatColor.GOLD  + "Unique Today: " + playedtoday);
+		sender.sendMessage(ChatColor.GOLD  + "First Joins Today: " + joinedtoday);
+		
+		rs1.close();
+		
+    }
+    
+    
+    /**
+     * Checks the total playtime of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     */
+    public void checkForums(Player player) throws SQLException{
+    	
+    	String username = player.getName();
+    	
+    	// query for the null quit record for this player
+		PreparedStatement s;
+		s = c.prepareStatement ("SELECT id FROM users WHERE username = ?");
+		s.setString(1, username);
+		s.executeQuery();
+		ResultSet rs = s.getResultSet();
+		
+		if(!rs.next()){
+			player.sendMessage(ChatColor.AQUA + "You haven't joined our forums at http://dhmc.us. Ideas? Concerns? You really need to join!");
+		}
+		
+		rs.close();
     }
     
     
