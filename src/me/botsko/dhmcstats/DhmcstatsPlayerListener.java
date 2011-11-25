@@ -94,7 +94,7 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 				
 				while( trs.next() ){
 					
-					Float playtime = trs.getFloat(1);
+					int playtime = trs.getInt(1);
 					
 					String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
 					PreparedStatement pstmt1 = plugin.c.prepareStatement(upd1);

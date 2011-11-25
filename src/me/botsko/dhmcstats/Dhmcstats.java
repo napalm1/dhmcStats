@@ -18,15 +18,23 @@ package me.botsko.dhmcstats;
  * - Added total/today/joined player stats command
  * Version 0.1.2
  * - Added forced playtime calcs for crashed join records
+ * Version 0.1.3a
+ * - Fixing numerous playtime bugs
+ * - Added code that will import the Playtime plugin hashmap data
+ * - Added "seen" command for first/last seen data
+ * - Adding basic promotion qualification system
+ * Version 0.1.3
+ * - Removed temporary code
  * 
  * 
  * BUGS:
  * - Commands need to be accessible from console
- * - Player stats no working on live server
+ * - Player stats not working on live server
  * 
  * 
  * FUTURE:
  * 
+ * - Log IPs so we can map them on the site
  * - Add current playtime to calc for up-to-the-minute numbers
  * - Alert lead moderators when a user qualifies for a promotion
  * - Add commands to see if a player is online
@@ -45,11 +53,19 @@ package me.botsko.dhmcstats;
  * 
  */
 
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
@@ -104,14 +120,14 @@ public class Dhmcstats extends JavaPlugin {
 	        
 	        // we also need to force a playtime calculation
 			PreparedStatement ts1;
-			ts1 = c.prepareStatement ("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins");
+			ts1 = c.prepareStatement ("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE playtime IS NULL");
 			ts1.executeQuery();
 			ResultSet trs = ts1.getResultSet();
 			
 			while( trs.next() ){
 				
 				Integer id = trs.getInt(1);
-				Float playtime = trs.getFloat(2);
+				int playtime = trs.getInt(2);
 				
 				String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
 				PreparedStatement pstmt1 = c.prepareStatement(upd1);
@@ -133,6 +149,14 @@ public class Dhmcstats extends JavaPlugin {
 		} else {
 			log.warning("[Dhmcstats]: PermissionsEx plugin was not found.");
 	    }
+		
+		// TEMPORARY IMPORT @REMOVEME
+//		try {
+//			importPlayTimeData();
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
  
 	
@@ -166,7 +190,10 @@ public class Dhmcstats extends JavaPlugin {
     	if (command.getName().equalsIgnoreCase("played")){
     		try {
     			if(permissions.has(player, "dhmcstats.played")){
-    				checkPlayTime( player.getName(), sender );
+    				if (args.length == 1)
+    					checkPlayTime( args[0], sender );
+    				else
+    					checkPlayTime( player.getName(), sender );
     			}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -186,6 +213,43 @@ public class Dhmcstats extends JavaPlugin {
     		return true;
     	}
     	
+    	// /seen [player]
+    	if (command.getName().equalsIgnoreCase("seen")){
+    		try {
+    			if(permissions.has(player, "dhmcstats.seen")){
+    				if (args.length == 1)
+    					checkSeen( args[0], sender );
+    				else
+    					checkSeen( player.getName(), sender );
+    			}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		return true;
+    	}
+    	
+    	
+    	// /rank
+    	if (command.getName().equalsIgnoreCase("rank")){
+    		try {
+    			if(permissions.has(player, "dhmcstats.rank")){
+    				if (args.length == 1)
+    					checkQualifiesFor( args[0], sender );
+    				else
+    					checkQualifiesFor( player.getName(), sender );
+    			}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		return true;
+    	}
+
     	return false;
     }
     
@@ -197,6 +261,21 @@ public class Dhmcstats extends JavaPlugin {
      * @throws SQLException 
      */
     public void checkPlayTime(String username, CommandSender sender) throws SQLException{
+    
+		int playtime = getPlayTime(username);
+		int[] times = splitToComponentTimes(playtime);
+		sender.sendMessage(ChatColor.GOLD + "You've played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
+		
+    }
+    
+    
+    /**
+     * Checks the total playtime of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     */
+    public int getPlayTime(String username) throws SQLException{
     	
     	// query for the null quit record for this player
 		PreparedStatement s;
@@ -205,20 +284,16 @@ public class Dhmcstats extends JavaPlugin {
 		s.executeQuery();
 		ResultSet rs = s.getResultSet();
 		
-		while( rs.next() ){
-			
-			Float playtime = rs.getFloat(1);
-			
-			// @todo add current time
-			
-			int[] times = splitToComponentTimes(playtime);
-			
-			// display to user
-			sender.sendMessage(ChatColor.GOLD + "You've played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
-			
+		try {
+			rs.first();
+			return rs.getInt(1);
+		}
+		catch ( SQLException e ) {
+			e.printStackTrace();
 		}
 		
 		rs.close();
+		return 0;
 		
     }
     
@@ -234,7 +309,7 @@ public class Dhmcstats extends JavaPlugin {
     	
     	// Pull how many players joined in total
 		PreparedStatement s;
-		s = c.prepareStatement ("SELECT COUNT( id ) FROM `mc_users`");
+		s = c.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins`");
 		s.executeQuery();
 		ResultSet rs = s.getResultSet();
 		
@@ -256,7 +331,7 @@ public class Dhmcstats extends JavaPlugin {
 		
 		// Pull how many players joined
 		PreparedStatement s2;
-		s2 = c.prepareStatement ("SELECT COUNT( id ) FROM `mc_users` WHERE DATE_FORMAT(firstseen,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
+		s2 = c.prepareStatement ("SELECT COUNT( id ) FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
 		s2.executeQuery();
 		ResultSet rs2 = s2.getResultSet();
 		
@@ -300,19 +375,180 @@ public class Dhmcstats extends JavaPlugin {
     
     
     /**
+     * Checks the total playtime of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     * @throws ParseException 
+     */
+    public void checkSeen(String username, CommandSender sender) throws SQLException, ParseException{
+    	
+    	DateFormat formatter ;
+    	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	Date joined = (Date)formatter.parse( checkFirstSeen(username) );
+    	sender.sendMessage(ChatColor.GOLD + "Joined " + joined);
+   
+    	DateFormat formatter1 ;
+    	formatter1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	Date seen = (Date)formatter1.parse( checkLastSeen(username) );
+    	sender.sendMessage(ChatColor.GOLD + "Last Seen " + seen);
+		
+    }
+    
+    
+    
+    /**
+     * Checks the total playtime of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     */
+    public String checkFirstSeen(String username) throws SQLException{
+    	
+		PreparedStatement s;
+		s = c.prepareStatement ("SELECT player_join FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
+		s.setString(1, username);
+		s.executeQuery();
+		ResultSet rs = s.getResultSet();
+		
+		try {
+			rs.first();
+			return rs.getString("player_join");
+		}
+		catch ( SQLException e ) {
+			e.printStackTrace();
+		}
+		
+		rs.close();
+		return "";
+		
+    }
+    
+    
+    /**
+     * Checks the total playtime of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     */
+    public String checkLastSeen(String username) throws SQLException{
+    	
+		PreparedStatement s;
+		s = c.prepareStatement ("SELECT player_quit FROM joins WHERE username = ? AND player_quit IS NOT NULL ORDER BY player_quit DESC LIMIT 1;");
+		s.setString(1, username);
+		s.executeQuery();
+		ResultSet rs = s.getResultSet();
+		
+		try {
+			rs.first();
+			return rs.getString("player_quit");
+		}
+		catch ( SQLException e ) {
+			e.printStackTrace();
+		}
+		
+		rs.close();
+		return "";
+		
+    }
+    
+    
+    /**
+     * Checks the total playtime of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     * @throws ParseException 
+     */
+    public void checkQualifiesFor(String username, CommandSender sender) throws SQLException, ParseException{
+    	
+    	// get the base join date
+    	DateFormat formatter ;
+    	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	Date joined = (Date)formatter.parse( checkFirstSeen(username) );
+    	Date today = new Date();
+    	long diff = today.getTime() - joined.getTime();
+    	int days = (int) ((diff / 1000) / 86400);
+    	
+    	// Get the play time
+    	int hours = getPlayTime(username) / 3600;
+    	
+    	// Promotion checks per group
+    	if(permissions.getUser(username).inGroup("LeadModerator")){
+    		sender.sendMessage(ChatColor.GOLD + username + " is a mod. Ask Vive");
+    	}
+    	else if(permissions.getUser(username).inGroup("Moderator")){
+    		sender.sendMessage(ChatColor.GOLD + username + " is a mod. Ask Vive");
+    	}
+    	else if(permissions.getUser(username).inGroup("NewModerator")){
+    		sender.sendMessage(ChatColor.GOLD + username + " is a mod. Ask Vive");
+    	}
+    	else if(permissions.getUser(username).inGroup("MythicalPlayer")){
+    		// no promo policy here
+    	}
+    	else if(permissions.getUser(username).inGroup("LegendaryPlayer")){
+    		// check mc skills
+    		// say "possibly"
+    	}
+    	else if(permissions.getUser(username).inGroup("RespectedPlayer")){
+    		if(days >= 25 && hours >= 80){
+    			sender.sendMessage(ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary");
+    		} else {
+    			sender.sendMessage(ChatColor.GOLD + username + " is not awaiting promotion.");
+    		}
+    	}
+    	else if(permissions.getUser(username).inGroup("TrustedPlayer")){
+    		if(days >= 5 && hours >= 20){
+    			sender.sendMessage(ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected");
+    		} else {
+    			sender.sendMessage(ChatColor.GOLD + username + " is not awaiting promotion.");
+    		}
+    	}
+    	else {
+    		if(days >= 1 && hours >= 5){
+    			sender.sendMessage(ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted");
+    		} else {
+    			sender.sendMessage(ChatColor.GOLD + username + " is not awaiting promotion.");
+    		}
+    	}
+    }
+    
+    // TEMPORARY CODE FOR PLUGIN TRANSITION  @REMOVEME
+    public Object importPlayTimeData() throws Exception {
+    	HashMap<Player,Boolean> result = load("/minecraft/plugins/Playtime/totals");
+        Iterator it = result.entrySet().iterator();
+        while (it.hasNext()) {
+        	Map.Entry pairs = (Map.Entry)it.next();
+        	int playtime = Integer.parseInt((String) pairs.getValue().toString()) / 1000;
+        	String s = String.format("UPDATE joins SET playtime = '"+playtime+"' WHERE username = '"+pairs.getKey()+"' AND playtime = 1");
+			log.info(s);
+	        PreparedStatement pstmt = c.prepareStatement(s);
+	        pstmt.executeUpdate();
+
+        }
+		return it;
+	}
+    public HashMap<Player,Boolean> load(String path) throws Exception
+	{
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path));
+		Object result = ois.readObject();
+		ois.close();
+		return (HashMap<Player,Boolean>)result;
+	}
+    
+    
+    /**
      * Convert seconds into hours/mins/secs
      * 
      * @param biggy
      * @return
      */
-    public static int[] splitToComponentTimes(Float biggy){
-        long longVal = biggy.longValue();
-        int hours = (int) longVal / 3600;
-        int remainder = (int) longVal - hours * 3600;
+    public static int[] splitToComponentTimes(int biggy){
+        int hours = (int) biggy / 3600;
+        int remainder = (int) biggy - hours * 3600;
         int mins = remainder / 60;
         remainder = remainder - mins * 60;
         int secs = remainder;
-
         int[] ints = {hours , mins , secs};
         return ints;
     }

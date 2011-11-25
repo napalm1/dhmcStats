@@ -1,11 +1,17 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.1.2
+version: 0.1.3a
 softdepend: [PermissionsEx]
 commands:
    played:
-      description: Displays a player's playtime on this server.
+      description: Displays a player's play time on this server.
       usage: /played [player]
    playerstats:
       description: Displays a few statistics of player counts.
       usage: /playerstats
+   seen:
+      description: Display join and last seen dates for a player.
+      usage: /seen [player]
+   rank:
+      description: Displays rank information, mainly qualification for next rank.
+      usage: /rank [player]
