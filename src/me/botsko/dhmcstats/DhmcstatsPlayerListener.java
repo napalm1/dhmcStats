@@ -26,7 +26,7 @@ public class DhmcstatsPlayerListener extends PlayerListener {
     /**
      * Save the timestamp and player data upon the JOIN event
      */
-    public void onPlayerJoin(PlayerJoinEvent event){
+    public void onPlayerJoin(PlayerJoinEvent event) {
         
         Player player = event.getPlayer();
         String username = player.getName();
@@ -102,8 +102,6 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 					
 				}
 			}
-	        
-	
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();

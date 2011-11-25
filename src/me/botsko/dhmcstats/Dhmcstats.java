@@ -16,10 +16,13 @@ package me.botsko.dhmcstats;
  * - Added core playtime reading function
  * - Added forum registration check to alert user on join
  * - Added total/today/joined player stats command
+ * Version 0.1.2
+ * - Added forced playtime calcs for crashed join records
+ * 
  * 
  * BUGS:
- * - We need to force-calc playtime onenable
  * - Commands need to be accessible from console
+ * - Player stats no working on live server
  * 
  * 
  * FUTURE:
@@ -72,11 +75,11 @@ public class Dhmcstats extends JavaPlugin {
     /**
      * Connects to the MySQL database
      */
-    public void dbc(){
+    protected void dbc(){
     	try {
 			c = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/minecraft","root","");
 		} catch (SQLException e) {
-			log.throwing("me.botsko.dhmcstats", "dbConnect()", e);
+			log.throwing("me.botsko.dhmcstats", "dbc()", e);
 		}
 	}
 
@@ -99,8 +102,22 @@ public class Dhmcstats extends JavaPlugin {
 	        PreparedStatement pstmt = c.prepareStatement(s);
 	        pstmt.executeUpdate();
 	        
-	        // @todo we also need to force a playtime calculation
-	        
+	        // we also need to force a playtime calculation
+			PreparedStatement ts1;
+			ts1 = c.prepareStatement ("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins");
+			ts1.executeQuery();
+			ResultSet trs = ts1.getResultSet();
+			
+			while( trs.next() ){
+				
+				Integer id = trs.getInt(1);
+				Float playtime = trs.getFloat(2);
+				
+				String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
+				PreparedStatement pstmt1 = c.prepareStatement(upd1);
+				pstmt1.executeUpdate();
+				
+			}
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
