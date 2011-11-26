@@ -1,6 +1,6 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.1.3a
+version: 0.1.4
 softdepend: [PermissionsEx]
 commands:
    played:
@@ -15,3 +15,6 @@ commands:
    rank:
       description: Displays rank information, mainly qualification for next rank.
       usage: /rank [player]
+   ison:
+      description: Checks if the user is online.
+      usage: /ison [player]

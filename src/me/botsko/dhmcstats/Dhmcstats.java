@@ -25,19 +25,22 @@ package me.botsko.dhmcstats;
  * - Adding basic promotion qualification system
  * Version 0.1.3
  * - Removed temporary code
+ * - Adding IP tracking
+ * - Adding player count tracking, player count messaging on login
+ * Version 0.1.4
+ * - Added /ison [player] command
+ * - Added partial name matching to most options
  * 
  * 
  * BUGS:
  * - Commands need to be accessible from console
- * - Player stats not working on live server
+ * - Player stats not working on live server?
  * 
  * 
  * FUTURE:
  * 
- * - Log IPs so we can map them on the site
  * - Add current playtime to calc for up-to-the-minute numbers
  * - Alert lead moderators when a user qualifies for a promotion
- * - Add commands to see if a player is online
  * - Reward users who sign up for the forums with something, or who post replies
  * 
  * 
@@ -53,8 +56,6 @@ package me.botsko.dhmcstats;
  * 
  */
 
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -63,9 +64,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
@@ -149,14 +147,6 @@ public class Dhmcstats extends JavaPlugin {
 		} else {
 			log.warning("[Dhmcstats]: PermissionsEx plugin was not found.");
 	    }
-		
-		// TEMPORARY IMPORT @REMOVEME
-//		try {
-//			importPlayTimeData();
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 	}
  
 	
@@ -249,6 +239,22 @@ public class Dhmcstats extends JavaPlugin {
 			}
     		return true;
     	}
+    	
+    	
+    	// /ison
+    	if (command.getName().equalsIgnoreCase("ison")){
+    		if(permissions.has(player, "dhmcstats.ison")){
+				if (args.length == 1){
+					 String ison = expandName(args[0]);
+					 if(ison != null){
+						 sender.sendMessage( ison + " is online" ); 
+					 } else {
+						 sender.sendMessage( args[0] + " is not online" ); 
+					 }
+				}
+			}
+    		return true;
+    	}
 
     	return false;
     }
@@ -260,11 +266,17 @@ public class Dhmcstats extends JavaPlugin {
      * @param username
      * @throws SQLException 
      */
-    public void checkPlayTime(String username, CommandSender sender) throws SQLException{
+    public void checkPlayTime(String username, CommandSender sender) throws SQLException {
+    	
+    	// Expand partials
+    	String tmp = expandName(username);
+    	if(tmp != null){
+    		username = tmp;
+    	}
     
 		int playtime = getPlayTime(username);
 		int[] times = splitToComponentTimes(playtime);
-		sender.sendMessage(ChatColor.GOLD + "You've played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
+		sender.sendMessage(ChatColor.GOLD + username + " has played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
 		
     }
     
@@ -339,7 +351,8 @@ public class Dhmcstats extends JavaPlugin {
 		while( rs1.next() ){
 			joinedtoday = rs2.getInt(1);
 		}
-		
+
+		sender.sendMessage(ChatColor.GOLD  + "Players Online: " + getOnlineCount());
 		sender.sendMessage(ChatColor.GOLD  + "Total Players: " + total);
 		sender.sendMessage(ChatColor.GOLD  + "Unique Today: " + playedtoday);
 		sender.sendMessage(ChatColor.GOLD  + "First Joins Today: " + joinedtoday);
@@ -382,6 +395,12 @@ public class Dhmcstats extends JavaPlugin {
      * @throws ParseException 
      */
     public void checkSeen(String username, CommandSender sender) throws SQLException, ParseException{
+    	
+    	// Expand partials
+    	String tmp = expandName(username);
+    	if(tmp != null){
+    		username = tmp;
+    	}
     	
     	DateFormat formatter ;
     	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -460,7 +479,13 @@ public class Dhmcstats extends JavaPlugin {
      * @throws SQLException 
      * @throws ParseException 
      */
-    public void checkQualifiesFor(String username, CommandSender sender) throws SQLException, ParseException{
+    public void checkQualifiesFor(String username, CommandSender sender) throws SQLException, ParseException {
+    	
+    	// Expand partials
+    	String tmp = expandName(username);
+    	if(tmp != null){
+    		username = tmp;
+    	}
     	
     	// get the base join date
     	DateFormat formatter ;
@@ -513,28 +538,45 @@ public class Dhmcstats extends JavaPlugin {
     	}
     }
     
-    // TEMPORARY CODE FOR PLUGIN TRANSITION  @REMOVEME
-    public Object importPlayTimeData() throws Exception {
-    	HashMap<Player,Boolean> result = load("/minecraft/plugins/Playtime/totals");
-        Iterator it = result.entrySet().iterator();
-        while (it.hasNext()) {
-        	Map.Entry pairs = (Map.Entry)it.next();
-        	int playtime = Integer.parseInt((String) pairs.getValue().toString()) / 1000;
-        	String s = String.format("UPDATE joins SET playtime = '"+playtime+"' WHERE username = '"+pairs.getKey()+"' AND playtime = 1");
-			log.info(s);
-	        PreparedStatement pstmt = c.prepareStatement(s);
-	        pstmt.executeUpdate();
+    
+    /**
+     * 
+     */
+    public int getOnlineCount(){
+    	return getServer().getOnlinePlayers().length;
+    }
+    
 
+    /**
+     * Partial username matching
+     * @param Name
+     * @return
+     */
+    public String expandName(String Name) {
+        int m = 0;
+        String Result = "";
+        for (int n = 0; n < getServer().getOnlinePlayers().length; n++) {
+            String str = getServer().getOnlinePlayers()[n].getName();
+            if (str.matches("(?i).*" + Name + ".*")) {
+                m++;
+                Result = str;
+                if(m==2) {
+                    return null;
+                }
+            }
+            if (str.equalsIgnoreCase(Name))
+                return str;
         }
-		return it;
-	}
-    public HashMap<Player,Boolean> load(String path) throws Exception
-	{
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path));
-		Object result = ois.readObject();
-		ois.close();
-		return (HashMap<Player,Boolean>)result;
-	}
+        if (m == 1)
+            return Result;
+        if (m > 1) {
+            return null;
+        }
+        if (m < 1) {
+            return null;
+        }
+        return null;
+    }
     
     
     /**

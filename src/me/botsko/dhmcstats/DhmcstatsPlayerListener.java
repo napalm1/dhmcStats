@@ -4,6 +4,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
@@ -33,24 +35,27 @@ public class DhmcstatsPlayerListener extends PlayerListener {
  
         java.util.Date date= new java.util.Date();
         String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
+        
+        // identify ip
+        String ip = player.getAddress().getAddress().getHostAddress().toString();
 
         try {
 			if (plugin.c == null || plugin.c.isClosed()) plugin.dbc();
 			
-			String s = String.format("INSERT INTO joins (username,player_join) VALUES ('%s','%s')", username, ts);
-			//plugin.log.info(s);
+			String s = String.format("INSERT INTO joins (username,player_join,ip,player_count) VALUES ('%s','%s','%s','%d')", username, ts, ip, plugin.getOnlineCount());
 	        PreparedStatement pstmt = plugin.c.prepareStatement(s);
 	        pstmt.executeUpdate();
+	        
+	        player.sendMessage(ChatColor.AQUA + "Welcome " + username + "! We have " + plugin.getOnlineCount() + " players online.");
 	
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
 		}
-        
+
         try {
 			plugin.checkForums(player);
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
