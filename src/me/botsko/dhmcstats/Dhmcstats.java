@@ -30,15 +30,17 @@ package me.botsko.dhmcstats;
  * Version 0.1.4
  * - Added /ison [player] command
  * - Added partial name matching to most options
+ * Version 0.1.5
+ * - Playtime for current online session now added to totalplaytime checks
  * 
  * 
  * BUGS:
+ * - First joins stat not working on live
  * - Commands need to be accessible from console
- * - Player stats not working on live server?
- * 
  * 
  * FUTURE:
  * 
+ * - Add scheduled check for rank ups every fifteen minutes?
  * - Add current playtime to calc for up-to-the-minute numbers
  * - Alert lead moderators when a user qualifies for a promotion
  * - Reward users who sign up for the forums with something, or who post replies
@@ -187,6 +189,8 @@ public class Dhmcstats extends JavaPlugin {
     			}
 			} catch (SQLException e) {
 				e.printStackTrace();
+			} catch (ParseException e) {
+				e.printStackTrace();
 			}
     		return true;
     	}
@@ -265,8 +269,9 @@ public class Dhmcstats extends JavaPlugin {
      * 
      * @param username
      * @throws SQLException 
+     * @throws ParseException 
      */
-    public void checkPlayTime(String username, CommandSender sender) throws SQLException {
+    public void checkPlayTime(String username, CommandSender sender) throws SQLException, ParseException {
     	
     	// Expand partials
     	String tmp = expandName(username);
@@ -286,8 +291,9 @@ public class Dhmcstats extends JavaPlugin {
      * 
      * @param username
      * @throws SQLException 
+     * @throws ParseException 
      */
-    public int getPlayTime(String username) throws SQLException{
+    public int getPlayTime(String username) throws SQLException, ParseException{
     	
     	// query for the null quit record for this player
 		PreparedStatement s;
@@ -298,7 +304,36 @@ public class Dhmcstats extends JavaPlugin {
 		
 		try {
 			rs.first();
-			return rs.getInt(1);
+			int before_current = rs.getInt(1);
+			
+			// We also need to pull any incomplete join and calc up-to-the-minute playtime
+			PreparedStatement s1;
+			s1 = c.prepareStatement ("SELECT player_join FROM joins WHERE username = ? AND player_quit IS NULL");
+			s1.setString(1, username);
+			s1.executeQuery();
+			ResultSet rs1 = s1.getResultSet();
+			
+			long session_hours = 0;
+			try {
+				if(rs1.first()){
+					String session_started = rs1.getString("player_join");
+					
+					DateFormat formatter ;
+			    	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			    	Date joined = (Date)formatter.parse( session_started );
+			    	Date today = new Date();
+			    	session_hours = today.getTime() - joined.getTime();
+			    	session_hours = session_hours / 1000;
+				}
+			}
+			catch ( SQLException e ) {
+				e.printStackTrace();
+			}
+			
+			rs1.close();
+			
+			return (int) (before_current + session_hours);
+			
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
@@ -401,7 +436,7 @@ public class Dhmcstats extends JavaPlugin {
     	if(tmp != null){
     		username = tmp;
     	}
-    	
+
     	DateFormat formatter ;
     	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     	Date joined = (Date)formatter.parse( checkFirstSeen(username) );
