@@ -1,6 +1,6 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.1.4
+version: 0.1.6
 softdepend: [PermissionsEx]
 commands:
    played:
@@ -13,6 +13,9 @@ commands:
       description: Display join and last seen dates for a player.
       usage: /seen [player]
    rank:
+      description: Displays rank information, mainly qualification for next rank.
+      usage: /rank [player]
+   rankall:
       description: Displays rank information, mainly qualification for next rank.
       usage: /rank [player]
    ison:

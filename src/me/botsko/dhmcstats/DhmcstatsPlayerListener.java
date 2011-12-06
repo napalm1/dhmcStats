@@ -3,6 +3,7 @@ package me.botsko.dhmcstats;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import org.bukkit.ChatColor;
@@ -47,6 +48,8 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 	        pstmt.executeUpdate();
 	        
 	        player.sendMessage(ChatColor.AQUA + "Welcome " + username + "! We have " + plugin.getOnlineCount() + " players online.");
+	        
+	        pstmt.close();
 	
 		}
 		catch ( SQLException e ) {
@@ -58,6 +61,25 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+        
+        
+        // Check the user qualifies for any rank, alert mods
+        String promo = "";
+        try {
+			promo = plugin.checkQualifiesFor(username);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+        // if string not empty, notify lead mods
+        if(promo != "" && promo.indexOf(" Ask Vive") == -1 && promo.indexOf(" Legendary") == -1 && promo.indexOf(" not awaiting") == -1){
+	        for(Player pl: plugin.getServer().getOnlinePlayers()) {
+	            if(pl.hasPermission("dhmcstats.promoalert")) {
+	            	pl.sendMessage(promo);
+	            }
+	        }
+        }
     }
     
     
@@ -89,6 +111,7 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 				String upd = String.format("UPDATE joins SET player_quit = '%s' WHERE id = '%d'", ts, id);
 				PreparedStatement pstmt = plugin.c.prepareStatement(upd);
 				pstmt.executeUpdate();
+				pstmt.close();
 	        
 				// now calculate the time spent online between this quit and join
 				PreparedStatement ts1;
@@ -104,9 +127,16 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 					String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
 					PreparedStatement pstmt1 = plugin.c.prepareStatement(upd1);
 					pstmt1.executeUpdate();
+					pstmt1.close();
 					
 				}
+				
+				trs.close();
+				ts1.close();
 			}
+			
+			rs.close();
+			s.close();
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();

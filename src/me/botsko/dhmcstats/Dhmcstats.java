@@ -32,29 +32,31 @@ package me.botsko.dhmcstats;
  * - Added partial name matching to most options
  * Version 0.1.5
  * - Playtime for current online session now added to totalplaytime checks
+ * Version 0.1.5.1
+ * - Database result/statement closing
+ * - Minor bugfix in playerstats
+ * - Trying to hide legendary/ask viv promo notifications
+ * Version 0.1.5.2
+ * - Minor sql statement close missed
+ * - Disabled join data, since we don't actually log first-joins yet
+ * Version 0.1.5.3
+ * - Adding auto-reconnect settings to database connection
+ * Version 0.1.6
+ * - "Not awaiting" promo messages now hidden from joins
+ * - Adding rankall command
  * 
  * 
  * BUGS:
+ * - Rank doesn't count current session
+ * - Awaiting promo shows on first join
  * - First joins stat not working on live
  * - Commands need to be accessible from console
  * 
  * FUTURE:
- * 
- * - Add scheduled check for rank ups every fifteen minutes?
- * - Add current playtime to calc for up-to-the-minute numbers
+ * - Add info about "why" a user doesn't qualify for a rank, and how long until they do
  * - Alert lead moderators when a user qualifies for a promotion
  * - Reward users who sign up for the forums with something, or who post replies
  * 
- * 
- *     for(Player player: getServer().getOnlinePlayers()) {
-     
-        if(player.hasPermission("send.me.message")) {
-            player.sendMessage("You were sent a message");
-        }
-     
-    }
-
-
  * 
  */
 
@@ -73,10 +75,12 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+//import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 
@@ -92,12 +96,19 @@ public class Dhmcstats extends JavaPlugin {
      * Connects to the MySQL database
      */
     protected void dbc(){
-    	try {
-			c = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/minecraft","root","");
-		} catch (SQLException e) {
-			log.throwing("me.botsko.dhmcstats", "dbc()", e);
-		}
-	}
+    	
+        java.util.Properties conProperties = new java.util.Properties();
+        conProperties.put("user", "root");
+        conProperties.put("password", "");
+        conProperties.put("autoReconnect", "true");
+        conProperties.put("maxReconnects", "3");
+
+        try {
+        c = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/minecraft", conProperties);
+        } catch (SQLException e) {
+            log.throwing("me.botsko.dhmcstats", "dbc()", e);
+        }
+    }
 
 
     /**
@@ -132,8 +143,14 @@ public class Dhmcstats extends JavaPlugin {
 				String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
 				PreparedStatement pstmt1 = c.prepareStatement(upd1);
 				pstmt1.executeUpdate();
+				pstmt1.close();
 				
 			}
+			
+			pstmt.close();
+			ts1.close();
+			trs.close();
+			
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
@@ -231,15 +248,23 @@ public class Dhmcstats extends JavaPlugin {
     		try {
     			if(permissions.has(player, "dhmcstats.rank")){
     				if (args.length == 1)
-    					checkQualifiesFor( args[0], sender );
+    					getQualifyFor( args[0], sender );
     				else
-    					checkQualifiesFor( player.getName(), sender );
+    					getQualifyFor( player.getName(), sender );
     			}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (ParseException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+			}
+    		return true;
+    	}
+    	
+    	
+    	// /rankall
+    	if (command.getName().equalsIgnoreCase("rankall")){
+    		if(permissions.has(player, "dhmcstats.rank")){
+				rankAll( sender );
 			}
     		return true;
     	}
@@ -331,6 +356,7 @@ public class Dhmcstats extends JavaPlugin {
 			}
 			
 			rs1.close();
+			s1.close();
 			
 			return (int) (before_current + session_hours);
 			
@@ -340,6 +366,7 @@ public class Dhmcstats extends JavaPlugin {
 		}
 		
 		rs.close();
+		s.close();
 		return 0;
 		
     }
@@ -364,6 +391,9 @@ public class Dhmcstats extends JavaPlugin {
 		while( rs.next() ){
 			total = rs.getInt(1);
 		}
+		
+		rs.close();
+		s.close();
     	
     	// Pull how many players were online today
 		PreparedStatement s1;
@@ -376,23 +406,27 @@ public class Dhmcstats extends JavaPlugin {
 			playedtoday = rs1.getInt(1);
 		}
 		
-		// Pull how many players joined
-		PreparedStatement s2;
-		s2 = c.prepareStatement ("SELECT COUNT( id ) FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
-		s2.executeQuery();
-		ResultSet rs2 = s2.getResultSet();
+		rs1.close();
+		s1.close();
 		
-		Integer joinedtoday = 0;
-		while( rs1.next() ){
-			joinedtoday = rs2.getInt(1);
-		}
+		// Pull how many players joined
+//		PreparedStatement s2;
+//		s2 = c.prepareStatement ("SELECT COUNT( id ), DATE_FORMAT(player_join,'%Y-%m-%d'), DATE_FORMAT(NOW(),'%Y-%m-%d') FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
+//		s2.executeQuery();
+//		ResultSet rs2 = s2.getResultSet();
+//		
+//		Integer joinedtoday = 0;
+//		while( rs2.next() ){
+//			joinedtoday = rs2.getInt(1);
+//		}
+//		
+//		rs2.close();
+//		s2.close();
 
 		sender.sendMessage(ChatColor.GOLD  + "Players Online: " + getOnlineCount());
 		sender.sendMessage(ChatColor.GOLD  + "Total Players: " + total);
 		sender.sendMessage(ChatColor.GOLD  + "Unique Today: " + playedtoday);
-		sender.sendMessage(ChatColor.GOLD  + "First Joins Today: " + joinedtoday);
-		
-		rs1.close();
+//		sender.sendMessage(ChatColor.GOLD  + "First Joins Today: " + joinedtoday);
 		
     }
     
@@ -419,6 +453,7 @@ public class Dhmcstats extends JavaPlugin {
 		}
 		
 		rs.close();
+		s.close();
     }
     
     
@@ -467,13 +502,18 @@ public class Dhmcstats extends JavaPlugin {
 		
 		try {
 			rs.first();
-			return rs.getString("player_join");
+			String join = rs.getString("player_join");
+			rs.close();
+			s.close();
+			return join;
+			
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
 		}
 		
 		rs.close();
+		s.close();
 		return "";
 		
     }
@@ -495,15 +535,64 @@ public class Dhmcstats extends JavaPlugin {
 		
 		try {
 			rs.first();
-			return rs.getString("player_quit");
+			String quit = rs.getString("player_quit");
+			rs.close();
+			s.close();
+			return quit;
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
 		}
 		
 		rs.close();
+		s.close();
 		return "";
 		
+    }
+    
+    
+    /**
+     * Check all online players for promo
+     * @param sender
+     */
+    public void rankAll(CommandSender sender){
+    	
+    	for(Player pl: getServer().getOnlinePlayers()) {
+    	
+	    	// Check the user qualifies for any rank, alert mods
+	        String promo = "";
+	        PermissionUser user = permissions.getUser( pl.getName() );
+	        if( 
+	        	!user.inGroup( "LegendaryPlayer" ) &&
+	        	!user.inGroup( "MythicalPlayer" ) &&
+	        	!user.inGroup( "NewModerator" ) &&
+	        	!user.inGroup( "Moderator") &&
+	        	!user.inGroup( "LeadModerator" ) &&
+	        	!user.inGroup( "WorldEditor" ) &&
+	        	!user.inGroup( "Admin" )
+	        ){
+	        	try {
+					promo = checkQualifiesFor( pl.getName() );
+					sender.sendMessage(promo);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+	        }
+    	}
+    }
+    
+    
+    /**
+     * 
+     * @param username
+     * @param sender
+     * @throws SQLException
+     * @throws ParseException
+     */
+    public void getQualifyFor(String username, CommandSender sender) throws SQLException, ParseException {
+    	sender.sendMessage( checkQualifiesFor(username) );
     }
     
     
@@ -514,13 +603,15 @@ public class Dhmcstats extends JavaPlugin {
      * @throws SQLException 
      * @throws ParseException 
      */
-    public void checkQualifiesFor(String username, CommandSender sender) throws SQLException, ParseException {
+    public String checkQualifiesFor(String username) throws SQLException, ParseException {
     	
     	// Expand partials
     	String tmp = expandName(username);
     	if(tmp != null){
     		username = tmp;
     	}
+    	
+    	String msg = "";
     	
     	// get the base join date
     	DateFormat formatter ;
@@ -535,44 +626,54 @@ public class Dhmcstats extends JavaPlugin {
     	
     	// Promotion checks per group
     	if(permissions.getUser(username).inGroup("LeadModerator")){
-    		sender.sendMessage(ChatColor.GOLD + username + " is a mod. Ask Vive");
+    		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
     	}
     	else if(permissions.getUser(username).inGroup("Moderator")){
-    		sender.sendMessage(ChatColor.GOLD + username + " is a mod. Ask Vive");
+    		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
     	}
     	else if(permissions.getUser(username).inGroup("NewModerator")){
-    		sender.sendMessage(ChatColor.GOLD + username + " is a mod. Ask Vive");
+    		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
     	}
     	else if(permissions.getUser(username).inGroup("MythicalPlayer")){
-    		// no promo policy here
+    		msg = ChatColor.GOLD + username + " is Myth. Ask Vive";
     	}
     	else if(permissions.getUser(username).inGroup("LegendaryPlayer")){
-    		// check mc skills
-    		// say "possibly"
+    		msg = ChatColor.GOLD + username + " is Legendary. Check their skills, etc.";
     	}
     	else if(permissions.getUser(username).inGroup("RespectedPlayer")){
     		if(days >= 25 && hours >= 80){
-    			sender.sendMessage(ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary");
+    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary";
     		} else {
-    			sender.sendMessage(ChatColor.GOLD + username + " is not awaiting promotion.");
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion.";
     		}
     	}
     	else if(permissions.getUser(username).inGroup("TrustedPlayer")){
     		if(days >= 5 && hours >= 20){
-    			sender.sendMessage(ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected");
+    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected";
     		} else {
-    			sender.sendMessage(ChatColor.GOLD + username + " is not awaiting promotion.");
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion.";
     		}
     	}
     	else {
     		if(days >= 1 && hours >= 5){
-    			sender.sendMessage(ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted");
+    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted";
     		} else {
-    			sender.sendMessage(ChatColor.GOLD + username + " is not awaiting promotion.");
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion.";
     		}
     	}
+		return msg;
     }
     
+    
+    // save inventory to hash http://forums.bukkit.org/threads/saving-inventories.42672/#post-764541
+    
+//    Player player = event.getPlayer();
+//    ItemStack[] is = player.getInventory().getContents();
+    
+//    Map<Player, ItemStack[]>inventory = new HashMap<Player, ItemStack[]>();
+//    inventory.put(player, is);
+    // inventory.addItem(new ItemStack(278, 1));
+
     
     /**
      * 
