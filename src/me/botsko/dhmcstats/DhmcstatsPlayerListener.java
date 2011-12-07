@@ -12,6 +12,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import ru.tehkode.permissions.PermissionUser;
+
 public class DhmcstatsPlayerListener extends PlayerListener {
 
     public Dhmcstats plugin;
@@ -73,9 +75,10 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 			e.printStackTrace();
 		}
         // if string not empty, notify lead mods
-        if(promo != "" && promo.indexOf(" Ask Vive") == -1 && promo.indexOf(" Legendary") == -1 && promo.indexOf(" not awaiting") == -1){
+        if(promo != "" && promo.indexOf(" admin") == -1 && promo.indexOf(" Ask Vive") == -1 && promo.indexOf(" Legendary") == -1 && promo.indexOf(" not awaiting") == -1){
 	        for(Player pl: plugin.getServer().getOnlinePlayers()) {
-	            if(pl.hasPermission("dhmcstats.promoalert")) {
+	        	PermissionUser user = plugin.permissions.getUser( pl.getName() );
+	            if(user.inGroup( "LeadModerator" ) || user.inGroup( "Admin" )) {
 	            	pl.sendMessage(promo);
 	            }
 	        }

@@ -44,18 +44,21 @@ package me.botsko.dhmcstats;
  * Version 0.1.6
  * - "Not awaiting" promo messages now hidden from joins
  * - Adding rankall command
+ * Version 0.1.6.1
+ * - Removing inventory save code, since Duties plugin does it better
+ * - /rankall ignores people not awaiting, so the list won't explode chat
+ * - Adding basic info on how long until next rank
+ * - Attempting to fix promo announcements not sending to lead mods
  * 
  * 
  * BUGS:
- * - Rank doesn't count current session
+ * - Rank doesn't count current session?
  * - Awaiting promo shows on first join
  * - First joins stat not working on live
  * - Commands need to be accessible from console
  * 
  * FUTURE:
- * - Add info about "why" a user doesn't qualify for a rank, and how long until they do
- * - Alert lead moderators when a user qualifies for a promotion
- * - Reward users who sign up for the forums with something, or who post replies
+
  * 
  * 
  */
@@ -75,7 +78,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-//import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -572,8 +574,11 @@ public class Dhmcstats extends JavaPlugin {
 	        	!user.inGroup( "Admin" )
 	        ){
 	        	try {
+	        		sender.sendMessage(ChatColor.GOLD + "Checking... (showing only those who qualify)");
 					promo = checkQualifiesFor( pl.getName() );
-					sender.sendMessage(promo);
+					if(promo.indexOf(" not awaiting") == -1){
+						sender.sendMessage(promo);
+					}
 				} catch (SQLException e) {
 					e.printStackTrace();
 				} catch (ParseException e) {
@@ -625,14 +630,17 @@ public class Dhmcstats extends JavaPlugin {
     	int hours = getPlayTime(username) / 3600;
     	
     	// Promotion checks per group
-    	if(permissions.getUser(username).inGroup("LeadModerator")){
-    		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
+    	if(permissions.getUser(username).inGroup("Admin")){
+    		msg = ChatColor.GOLD + username + " is an admin. Nowhere to go man!";
+    	}
+    	else if(permissions.getUser(username).inGroup("LeadModerator")){
+    		msg = ChatColor.GOLD + username + " is a lead mod. Ask Vive";
     	}
     	else if(permissions.getUser(username).inGroup("Moderator")){
     		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
     	}
     	else if(permissions.getUser(username).inGroup("NewModerator")){
-    		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
+    		msg = ChatColor.GOLD + username + " is a new mod. Ask Vive";
     	}
     	else if(permissions.getUser(username).inGroup("MythicalPlayer")){
     		msg = ChatColor.GOLD + username + " is Myth. Ask Vive";
@@ -644,36 +652,29 @@ public class Dhmcstats extends JavaPlugin {
     		if(days >= 25 && hours >= 80){
     			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary";
     		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion.";
+    			String time_left = " Legendary in "+(25 - days)+" days, and "+(80 - hours)+" hours.";
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion." + time_left;
     		}
     	}
     	else if(permissions.getUser(username).inGroup("TrustedPlayer")){
     		if(days >= 5 && hours >= 20){
     			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected";
     		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion.";
+    			String time_left = " Respected in "+(5 - days)+" days, and "+(20 - hours)+" hours.";
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion."+time_left;
     		}
     	}
     	else {
     		if(days >= 1 && hours >= 5){
     			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted";
     		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion.";
+    			String time_left = " Trusted in "+(5 - hours)+" hours (day after you joined).";
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion."+time_left;
     		}
     	}
 		return msg;
     }
     
-    
-    // save inventory to hash http://forums.bukkit.org/threads/saving-inventories.42672/#post-764541
-    
-//    Player player = event.getPlayer();
-//    ItemStack[] is = player.getInventory().getContents();
-    
-//    Map<Player, ItemStack[]>inventory = new HashMap<Player, ItemStack[]>();
-//    inventory.put(player, is);
-    // inventory.addItem(new ItemStack(278, 1));
-
     
     /**
      * 
