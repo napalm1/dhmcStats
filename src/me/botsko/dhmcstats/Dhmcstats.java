@@ -559,6 +559,8 @@ public class Dhmcstats extends JavaPlugin {
      */
     public void rankAll(CommandSender sender){
     	
+    	sender.sendMessage(ChatColor.GOLD + "Checking... (showing only those who qualify)");
+    	
     	for(Player pl: getServer().getOnlinePlayers()) {
     	
 	    	// Check the user qualifies for any rank, alert mods
@@ -574,7 +576,6 @@ public class Dhmcstats extends JavaPlugin {
 	        	!user.inGroup( "Admin" )
 	        ){
 	        	try {
-	        		sender.sendMessage(ChatColor.GOLD + "Checking... (showing only those who qualify)");
 					promo = checkQualifiesFor( pl.getName() );
 					if(promo.indexOf(" not awaiting") == -1){
 						sender.sendMessage(promo);
