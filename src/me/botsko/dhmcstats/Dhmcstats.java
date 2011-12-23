@@ -49,16 +49,12 @@ package me.botsko.dhmcstats;
  * - /rankall ignores people not awaiting, so the list won't explode chat
  * - Adding basic info on how long until next rank
  * - Attempting to fix promo announcements not sending to lead mods
+ * Version 0.1.7
+ * - Fixing commands so they can be run from the console.
  * 
  * 
  * BUGS:
  * - Rank doesn't count current session?
- * - Awaiting promo shows on first join
- * - First joins stat not working on live
- * - Commands need to be accessible from console
- * 
- * FUTURE:
-
  * 
  * 
  */
@@ -76,6 +72,7 @@ import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
@@ -200,7 +197,7 @@ public class Dhmcstats extends JavaPlugin {
     	// /played [player]
     	if (command.getName().equalsIgnoreCase("played")){
     		try {
-    			if(permissions.has(player, "dhmcstats.played")){
+    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.played")) ){
     				if (args.length == 1)
     					checkPlayTime( args[0], sender );
     				else
@@ -217,7 +214,7 @@ public class Dhmcstats extends JavaPlugin {
     	// /playerstats
     	if (command.getName().equalsIgnoreCase("playerstats")){
     		try {
-    			if(permissions.has(player, "dhmcstats.playerstats")){
+    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.playerstats")) ){
     				checkPlayerCounts( sender );
     			}
 			} catch (SQLException e) {
@@ -229,7 +226,7 @@ public class Dhmcstats extends JavaPlugin {
     	// /seen [player]
     	if (command.getName().equalsIgnoreCase("seen")){
     		try {
-    			if(permissions.has(player, "dhmcstats.seen")){
+    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.seen")) ){
     				if (args.length == 1)
     					checkSeen( args[0], sender );
     				else
@@ -248,7 +245,7 @@ public class Dhmcstats extends JavaPlugin {
     	// /rank
     	if (command.getName().equalsIgnoreCase("rank")){
     		try {
-    			if(permissions.has(player, "dhmcstats.rank")){
+    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.rank")) ){	
     				if (args.length == 1)
     					getQualifyFor( args[0], sender );
     				else
@@ -265,7 +262,7 @@ public class Dhmcstats extends JavaPlugin {
     	
     	// /rankall
     	if (command.getName().equalsIgnoreCase("rankall")){
-    		if(permissions.has(player, "dhmcstats.rank")){
+    		if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.rank")) ){
 				rankAll( sender );
 			}
     		return true;
@@ -274,7 +271,7 @@ public class Dhmcstats extends JavaPlugin {
     	
     	// /ison
     	if (command.getName().equalsIgnoreCase("ison")){
-    		if(permissions.has(player, "dhmcstats.ison")){
+    		if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.ison")) ){	
 				if (args.length == 1){
 					 String ison = expandName(args[0]);
 					 if(ison != null){
@@ -410,25 +407,10 @@ public class Dhmcstats extends JavaPlugin {
 		
 		rs1.close();
 		s1.close();
-		
-		// Pull how many players joined
-//		PreparedStatement s2;
-//		s2 = c.prepareStatement ("SELECT COUNT( id ), DATE_FORMAT(player_join,'%Y-%m-%d'), DATE_FORMAT(NOW(),'%Y-%m-%d') FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
-//		s2.executeQuery();
-//		ResultSet rs2 = s2.getResultSet();
-//		
-//		Integer joinedtoday = 0;
-//		while( rs2.next() ){
-//			joinedtoday = rs2.getInt(1);
-//		}
-//		
-//		rs2.close();
-//		s2.close();
 
 		sender.sendMessage(ChatColor.GOLD  + "Players Online: " + getOnlineCount());
 		sender.sendMessage(ChatColor.GOLD  + "Total Players: " + total);
 		sender.sendMessage(ChatColor.GOLD  + "Unique Today: " + playedtoday);
-//		sender.sendMessage(ChatColor.GOLD  + "First Joins Today: " + joinedtoday);
 		
     }
     
