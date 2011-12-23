@@ -52,7 +52,7 @@ package me.botsko.dhmcstats;
  * Version 0.1.7
  * - Fixing commands so they can be run from the console.
  * - Adding newmod score checking
- * 
+ * - Adding more connection close/open commands, better connection management
  * 
  * BUGS:
  * - Rank doesn't count current session?
@@ -150,6 +150,7 @@ public class Dhmcstats extends JavaPlugin {
 			pstmt.close();
 			ts1.close();
 			trs.close();
+			c.close();
 			
 		}
 		catch ( SQLException e ) {
@@ -335,6 +336,8 @@ public class Dhmcstats extends JavaPlugin {
      */
     public int getPlayTime(String username) throws SQLException, ParseException{
     	
+    	if (c == null || c.isClosed()) dbc();
+    	
     	// query for the null quit record for this player
 		PreparedStatement s;
 		s = c.prepareStatement ("SELECT SUM(playtime) as playtime FROM joins WHERE username = ?");
@@ -382,6 +385,7 @@ public class Dhmcstats extends JavaPlugin {
 		
 		rs.close();
 		s.close();
+		c.close();
 		return 0;
 		
     }
@@ -395,6 +399,7 @@ public class Dhmcstats extends JavaPlugin {
      */
     public void checkPlayerCounts(CommandSender sender) throws SQLException{
     	
+    	if (c == null || c.isClosed()) dbc();
     	
     	// Pull how many players joined in total
 		PreparedStatement s;
@@ -423,6 +428,7 @@ public class Dhmcstats extends JavaPlugin {
 		
 		rs1.close();
 		s1.close();
+		c.close();
 
 		sender.sendMessage(ChatColor.GOLD  + "Players Online: " + getOnlineCount());
 		sender.sendMessage(ChatColor.GOLD  + "Total Players: " + total);
@@ -439,6 +445,8 @@ public class Dhmcstats extends JavaPlugin {
      */
     public void checkForums(Player player) throws SQLException{
     	
+    	if (c == null || c.isClosed()) dbc();
+    	
     	String username = player.getName();
     	
     	// query for the null quit record for this player
@@ -454,6 +462,8 @@ public class Dhmcstats extends JavaPlugin {
 		
 		rs.close();
 		s.close();
+		c.close();
+		
     }
     
     
@@ -494,6 +504,8 @@ public class Dhmcstats extends JavaPlugin {
      */
     public String checkFirstSeen(String username) throws SQLException{
     	
+    	if (c == null || c.isClosed()) dbc();
+    	
 		PreparedStatement s;
 		s = c.prepareStatement ("SELECT player_join FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
 		s.setString(1, username);
@@ -505,6 +517,7 @@ public class Dhmcstats extends JavaPlugin {
 			String join = rs.getString("player_join");
 			rs.close();
 			s.close();
+			c.close();
 			return join;
 			
 		}
@@ -514,6 +527,7 @@ public class Dhmcstats extends JavaPlugin {
 		
 		rs.close();
 		s.close();
+		c.close();
 		return "";
 		
     }
@@ -527,6 +541,8 @@ public class Dhmcstats extends JavaPlugin {
      */
     public String checkLastSeen(String username) throws SQLException{
     	
+    	if (c == null || c.isClosed()) dbc();
+    	
 		PreparedStatement s;
 		s = c.prepareStatement ("SELECT player_quit FROM joins WHERE username = ? AND player_quit IS NOT NULL ORDER BY player_quit DESC LIMIT 1;");
 		s.setString(1, username);
@@ -538,6 +554,7 @@ public class Dhmcstats extends JavaPlugin {
 			String quit = rs.getString("player_quit");
 			rs.close();
 			s.close();
+			c.close();
 			return quit;
 		}
 		catch ( SQLException e ) {
@@ -546,6 +563,7 @@ public class Dhmcstats extends JavaPlugin {
 		
 		rs.close();
 		s.close();
+		c.close();
 		return "";
 		
     }
@@ -683,6 +701,8 @@ public class Dhmcstats extends JavaPlugin {
      */
     public void checkScores(String username, CommandSender sender) throws SQLException{
     	
+    	if (c == null || c.isClosed()) dbc();
+    	
     	sender.sendMessage(ChatColor.GOLD + "NewMod Quiz scores for " + username + ": ");
     	
 		PreparedStatement s;
@@ -698,6 +718,7 @@ public class Dhmcstats extends JavaPlugin {
 			}
 			rs.close();
 			s.close();
+			c.close();
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
@@ -705,6 +726,7 @@ public class Dhmcstats extends JavaPlugin {
 		
 		rs.close();
 		s.close();
+		c.close();
 
     }
     

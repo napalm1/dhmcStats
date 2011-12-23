@@ -52,6 +52,7 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 	        player.sendMessage(ChatColor.AQUA + "Welcome " + username + "! We have " + plugin.getOnlineCount() + " players online.");
 	        
 	        pstmt.close();
+	        plugin.c.close();
 	
 		}
 		catch ( SQLException e ) {
@@ -140,6 +141,7 @@ public class DhmcstatsPlayerListener extends PlayerListener {
 			
 			rs.close();
 			s.close();
+			plugin.c.close();
 		}
 		catch ( SQLException e ) {
 			e.printStackTrace();
