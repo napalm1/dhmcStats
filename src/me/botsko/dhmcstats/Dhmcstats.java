@@ -51,6 +51,7 @@ package me.botsko.dhmcstats;
  * - Attempting to fix promo announcements not sending to lead mods
  * Version 0.1.7
  * - Fixing commands so they can be run from the console.
+ * - Adding newmod score checking
  * 
  * 
  * BUGS:
@@ -280,6 +281,21 @@ public class Dhmcstats extends JavaPlugin {
 						 sender.sendMessage( args[0] + " is not online" ); 
 					 }
 				}
+			}
+    		return true;
+    	}
+    	
+    	
+    	// /scores [player]
+    	if (command.getName().equalsIgnoreCase("scores")){
+    		try {
+				if (args.length == 1 && (sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.rank")) ))
+					checkScores( args[0], sender );
+				else
+					if(player != null)
+						checkScores( player.getName(), sender );
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
     		return true;
     	}
@@ -656,6 +672,50 @@ public class Dhmcstats extends JavaPlugin {
     		}
     	}
 		return msg;
+    }
+    
+    
+    /**
+     * Checks the newmod scores of a user
+     * 
+     * @param username
+     * @throws SQLException 
+     */
+    public void checkScores(String username, CommandSender sender) throws SQLException{
+    	
+    	sender.sendMessage(ChatColor.GOLD + "NewMod Quiz scores for " + username + ": ");
+    	
+		PreparedStatement s;
+		s = c.prepareStatement ("SELECT score, DATE_FORMAT(quiz_newmod.date_created,'%m/%d/%Y') as quizdate FROM quiz_newmod LEFT JOIN users ON users.id = quiz_newmod.user_id WHERE users.username = ? ORDER BY quiz_newmod.date_created;");
+		s.setString(1, username);
+		s.executeQuery();
+		ResultSet rs = s.getResultSet();
+		
+		try {
+			while(rs.next()){
+				Float score = round(rs.getFloat("score")) * 100;
+				sender.sendMessage(ChatColor.GOLD + rs.getString("quizdate") + ": " + score + "%");
+			}
+			rs.close();
+			s.close();
+		}
+		catch ( SQLException e ) {
+			e.printStackTrace();
+		}
+		
+		rs.close();
+		s.close();
+
+    }
+    
+    
+    /**
+     * 
+     * @param val
+     * @return
+     */
+    public float round( Float val ){
+    	return (float) (Math.round( val *100.0) / 100.0);
     }
     
     
