@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.exceptions.RankingException;
 
 public class DhmcstatsPlayerListener extends PlayerListener {
 
@@ -67,23 +68,25 @@ public class DhmcstatsPlayerListener extends PlayerListener {
         
         
         // Check the user qualifies for any rank, alert mods
-        String promo = "";
+//        String promo = "";
         try {
-			promo = plugin.checkQualifiesFor(username);
+			plugin.checkQualifiesFor(username);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
+		} catch (RankingException e) {
+			e.printStackTrace();
 		}
         // if string not empty, notify lead mods
-        if(promo != "" && promo.indexOf(" admin") == -1 && promo.indexOf(" Ask Vive") == -1 && promo.indexOf(" Legendary") == -1 && promo.indexOf(" not awaiting") == -1){
-	        for(Player pl: plugin.getServer().getOnlinePlayers()) {
-	        	PermissionUser user = plugin.permissions.getUser( pl.getName() );
-	            if(user.inGroup( "LeadModerator" ) || user.inGroup( "Admin" )) {
-	            	pl.sendMessage(promo);
-	            }
-	        }
-        }
+//        if(promo != "" && promo.indexOf(" admin") == -1 && promo.indexOf(" Ask Vive") == -1 && promo.indexOf(" Legendary") == -1 && promo.indexOf(" not awaiting") == -1){
+//	        for(Player pl: plugin.getServer().getOnlinePlayers()) {
+//	        	PermissionUser user = plugin.permissions.getUser( pl.getName() );
+//	            if(user.inGroup( "LeadModerator" ) || user.inGroup( "Admin" )) {
+//	            	pl.sendMessage(promo);
+//	            }
+//	        }
+//        }
     }
     
     
