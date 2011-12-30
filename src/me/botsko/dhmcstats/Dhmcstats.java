@@ -53,8 +53,6 @@ package me.botsko.dhmcstats;
  * - Fixing commands so they can be run from the console.
  * - Adding newmod score checking
  * - Adding more connection close/open commands, better connection management
- * Version 0.1.7.1
- * - Adding auto-ranking with new rank hours.
  * 
  * BUGS:
  * - Rank doesn't count current session?
@@ -84,7 +82,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.exceptions.RankingException;
 
 
 public class Dhmcstats extends JavaPlugin {
@@ -260,9 +257,6 @@ public class Dhmcstats extends JavaPlugin {
 				e.printStackTrace();
 			} catch (ParseException e) {
 				e.printStackTrace();
-			} catch (RankingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
     		return true;
     	}
@@ -271,12 +265,7 @@ public class Dhmcstats extends JavaPlugin {
     	// /rankall
     	if (command.getName().equalsIgnoreCase("rankall")){
     		if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.rank")) ){
-				try {
-					rankAll( sender );
-				} catch (RankingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				rankAll( sender );
 			}
     		return true;
     	}
@@ -583,9 +572,8 @@ public class Dhmcstats extends JavaPlugin {
     /**
      * Check all online players for promo
      * @param sender
-     * @throws RankingException 
      */
-    public void rankAll(CommandSender sender) throws RankingException{
+    public void rankAll(CommandSender sender){
     	
     	sender.sendMessage(ChatColor.GOLD + "Checking... (showing only those who qualify)");
     	
@@ -624,9 +612,8 @@ public class Dhmcstats extends JavaPlugin {
      * @param sender
      * @throws SQLException
      * @throws ParseException
-     * @throws RankingException 
      */
-    public void getQualifyFor(String username, CommandSender sender) throws SQLException, ParseException, RankingException {
+    public void getQualifyFor(String username, CommandSender sender) throws SQLException, ParseException {
     	sender.sendMessage( checkQualifiesFor(username) );
     }
     
@@ -637,9 +624,8 @@ public class Dhmcstats extends JavaPlugin {
      * @param username
      * @throws SQLException 
      * @throws ParseException 
-     * @throws RankingException 
      */
-    public String checkQualifiesFor(String username) throws SQLException, ParseException, RankingException {
+    public String checkQualifiesFor(String username) throws SQLException, ParseException {
     	
     	// Expand partials
     	String tmp = expandName(username);
@@ -680,30 +666,24 @@ public class Dhmcstats extends JavaPlugin {
     		msg = ChatColor.GOLD + username + " is Legendary. Check their skills, etc.";
     	}
     	else if(permissions.getUser(username).inGroup("RespectedPlayer")){
-    		if(days >= 50 && hours >= 160){
-    			//msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary";
-    			permissions.getUser(username).promote( permissions.getUser("viveleroi"), "default" );
-    			msg = ChatColor.GOLD + username + " was promoted to: " + ChatColor.WHITE + " Legendary";
+    		if(days >= 25 && hours >= 80){
+    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary";
     		} else {
     			String time_left = " Legendary in "+(25 - days)+" days, and "+(80 - hours)+" hours.";
     			msg = ChatColor.GOLD + username + " is not awaiting promotion." + time_left;
     		}
     	}
     	else if(permissions.getUser(username).inGroup("TrustedPlayer")){
-    		if(days >= 15 && hours >= 40){
-//    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected";
-    			permissions.getUser(username).promote( permissions.getUser("viveleroi"), "default" );
-    			msg = ChatColor.GOLD + username + " was promoted to: " + ChatColor.WHITE + " Respected";
+    		if(days >= 5 && hours >= 20){
+    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected";
     		} else {
     			String time_left = " Respected in "+(5 - days)+" days, and "+(20 - hours)+" hours.";
     			msg = ChatColor.GOLD + username + " is not awaiting promotion."+time_left;
     		}
     	}
     	else {
-    		if(days >= 3 && hours >= 10){
-//    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted";
-    			permissions.getUser(username).promote( permissions.getUser("viveleroi"), "default" );
-    			msg = ChatColor.GOLD + username + " was promoted to: " + ChatColor.WHITE + " Trusted";
+    		if(days >= 1 && hours >= 5){
+    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted";
     		} else {
     			String time_left = " Trusted in "+(5 - hours)+" hours (day after you joined).";
     			msg = ChatColor.GOLD + username + " is not awaiting promotion."+time_left;
