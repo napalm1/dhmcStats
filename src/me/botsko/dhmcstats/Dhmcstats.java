@@ -53,6 +53,8 @@ package me.botsko.dhmcstats;
  * - Fixing commands so they can be run from the console.
  * - Adding newmod score checking
  * - Adding more connection close/open commands, better connection management
+ * Version 0.1.8
+ * - Fixing playtime remaining messages to avoid player confusion
  * 
  * BUGS:
  * - Rank doesn't count current session?
@@ -669,27 +671,59 @@ public class Dhmcstats extends JavaPlugin {
     		if(days >= 25 && hours >= 80){
     			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary";
     		} else {
-    			String time_left = " Legendary in "+(25 - days)+" days, and "+(80 - hours)+" hours.";
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion." + time_left;
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Legendary", 25, days, 80, hours);
     		}
     	}
     	else if(permissions.getUser(username).inGroup("TrustedPlayer")){
     		if(days >= 5 && hours >= 20){
     			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected";
     		} else {
-    			String time_left = " Respected in "+(5 - days)+" days, and "+(20 - hours)+" hours.";
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion."+time_left;
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Respected", 5, days, 20, hours);
     		}
     	}
     	else {
     		if(days >= 1 && hours >= 5){
     			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted";
     		} else {
-    			String time_left = " Trusted in "+(5 - hours)+" hours (day after you joined).";
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion."+time_left;
+    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Trusted", 1, days, 5, hours);
     		}
     	}
 		return msg;
+    }
+    
+    
+    /**
+     * Improves the message about remaining time to avoid confusion with the negative numbers.
+     * @param rank
+     * @param min_days
+     * @param days
+     * @param min_hours
+     * @param hours
+     * @return
+     */
+    private String timeRemaining(String rank, int min_days, int days, int min_hours, int hours){
+    	
+    	int remain_days = (min_days - days);
+		int remain_hrs = (min_hours - hours);
+		
+		log.info("[DHMC]: Rank Check: remaining days: " + remain_days + " remaining hours: " + remain_hrs);
+		
+		// If days remain, but no hours
+		String time_left = " You need " + remain_days + " days, " + remain_hrs + " hours for " + rank; // default
+		if(remain_days >= 0 && remain_hrs <= 0){
+			time_left = rank+" in "+remain_days+" days. You already meet the minimum playtime hours requirement.";
+		}
+		// If hours remain, but no days
+		if(remain_days <= 0 && remain_hrs >= 0){
+			time_left = rank+" in "+remain_hrs+" hours of playtime. You already meet the minimum days requirement.";
+		}
+		// If both remain
+		if(remain_days >= 0 && remain_hrs >= 0){
+			time_left = rank+" in "+remain_hrs+" hours of playtime, in at least " + remain_days + " more days (since joined).";
+		}
+		
+		return time_left;
+    	
     }
     
     
