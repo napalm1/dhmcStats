@@ -8,13 +8,15 @@ import java.text.SimpleDateFormat;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import ru.tehkode.permissions.PermissionUser;
 
-public class DhmcstatsPlayerListener extends PlayerListener {
+public class DhmcstatsPlayerListener implements Listener {
 
     public Dhmcstats plugin;
     
@@ -31,7 +33,8 @@ public class DhmcstatsPlayerListener extends PlayerListener {
     /**
      * Save the timestamp and player data upon the JOIN event
      */
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onPlayerJoin(final PlayerJoinEvent event) {
         
         Player player = event.getPlayer();
         String username = player.getName();
@@ -90,7 +93,8 @@ public class DhmcstatsPlayerListener extends PlayerListener {
     /**
      * Save the timestamp and player data upon the QUIT event
      */
-    public void onPlayerQuit(PlayerQuitEvent event){
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onPlayerQuit(final PlayerQuitEvent event){
         
         Player player = event.getPlayer();
         String username = player.getName();

@@ -6,6 +6,9 @@ commands:
    played:
       description: Displays a player's play time on this server.
       usage: /played [player]
+   player:
+      description: Displays a player's stats.
+      usage: /player [player]
    playerstats:
       description: Displays a few statistics of player counts.
       usage: /playerstats

@@ -55,6 +55,8 @@ package me.botsko.dhmcstats;
  * - Adding more connection close/open commands, better connection management
  * Version 0.1.8
  * - Fixing playtime remaining messages to avoid player confusion
+ * Version 0.1.8.1
+ * - Updated to the new bukkit events
  * 
  * BUGS:
  * - Rank doesn't count current session?
@@ -71,16 +73,17 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Logger;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.nijikokun.register.payment.Methods;
+
+import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
@@ -159,10 +162,9 @@ public class Dhmcstats extends JavaPlugin {
 			e.printStackTrace();
 		}
 		
-		PluginManager pm = this.getServer().getPluginManager();
-		pm.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Event.Priority.Normal, this);
-		pm.registerEvent(Event.Type.PLAYER_QUIT, playerListener, Event.Priority.Normal, this);
+		getServer().getPluginManager().registerEvents(playerListener, this);
 		
+		PluginManager pm = this.getServer().getPluginManager();
 		if(pm.isPluginEnabled("PermissionsEx")){
 			permissions = PermissionsEx.getPermissionManager();
 			log.info("[Dhmcstats]: PermissionsEx found.");
@@ -214,6 +216,25 @@ public class Dhmcstats extends JavaPlugin {
 			}
     		return true;
     	}
+    	
+    	
+    	// /player [player]
+    	if (command.getName().equalsIgnoreCase("player")){
+    		try {
+    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.player")) ){
+    				if (args.length == 1)
+    					playerStats( args[0], sender );
+    				else
+    					playerStats( player.getName(), sender );
+    			}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+    		return true;
+    	}
+    	
     	
     	// /playerstats
     	if (command.getName().equalsIgnoreCase("playerstats")){
@@ -304,6 +325,40 @@ public class Dhmcstats extends JavaPlugin {
     	}
 
     	return false;
+    }
+    
+    
+    /**
+     * Returns a bunch of player stats
+     * 
+     * @param username
+     * @throws SQLException 
+     * @throws ParseException 
+     */
+    public void playerStats(String username, CommandSender sender) throws SQLException, ParseException {
+    	
+    	// Expand partials
+    	String tmp = expandName(username);
+    	if(tmp != null){
+    		username = tmp;
+    	}
+    
+    	checkPlayTime(username, sender);
+    	checkSeen(username, sender);
+    	getQualifyFor(username, sender);
+    	
+    	Double bal = Methods.getMethod().getAccount( username ).balance();
+    	sender.sendMessage(ChatColor.GOLD + "Money: $" + bal);
+    	
+    	PermissionUser user = permissions.getUser( username );
+    	
+    	String delim = "";
+        for ( PermissionGroup group : user.getGroups()) {
+            delim += group.getName() + ", ";
+        }
+
+        sender.sendMessage(ChatColor.GOLD + "Groups: " + delim);
+    	
     }
     
     
