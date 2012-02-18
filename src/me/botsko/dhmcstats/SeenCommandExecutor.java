@@ -44,26 +44,16 @@ public class SeenCommandExecutor implements CommandExecutor  {
     		Player player = (Player) sender;
     		
     		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.seen")) ){
-				if (args.length == 1)
-					try {
-						checkSeen( args[0], sender );
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				else
-					try {
-						checkSeen( player.getName(), sender );
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+    			
+    			String user = (args.length == 1 ? args[0] : player.getName());
+    			try {
+    				checkSeen( user, sender );
+					return true;
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
 			}
     	}
 

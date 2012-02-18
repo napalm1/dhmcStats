@@ -47,7 +47,7 @@ public abstract class DbDAO {
         }
     }
     
-    
+    public abstract void removeInvalidJoins();
     public abstract void forceDateForNullQuits();
     public abstract void forcePlaytimeForNullQuits();
     public abstract void registerPlayerJoin( String username, String timestamp, String ip, int online_count );

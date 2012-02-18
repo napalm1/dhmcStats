@@ -73,6 +73,26 @@ public class DbDAOMySQL extends DbDAO {
 	 * @param person
 	 * @param account_name
 	 */
+	public void removeInvalidJoins(){
+		try {
+            DbConnection conn = getConnection();
+			String str = String.format("DELETE FROM joins WHERE player_join = '0000-00-00 00:00:00'");
+	        PreparedStatement s = conn.prepareStatement( str );
+    		s.executeUpdate();
+    		s.close();
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+	}
+	
+    
+    /**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
 	public void forceDateForNullQuits(){
 		try {
             DbConnection conn = getConnection();
@@ -334,18 +354,21 @@ public class DbDAOMySQL extends DbDAO {
 	 * @throws ParseException 
 	 */
 	public Date getPlayerFirstSeen( String username ) throws ParseException{
+		Date joined = null;
 		try {
             DbConnection conn = getConnection();
             PreparedStatement s;
     		s = conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
+    		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
-
-    		String join = rs.getString("player_join");
     		
-    		DateFormat formatter ;
-        	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        	Date joined = (Date)formatter.parse( join );
+    		if(rs.first()){
+    			String join = rs.getString("player_join");
+	    		DateFormat formatter ;
+	        	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	        	joined = (Date)formatter.parse( join );
+    		}
     		
     		rs.close();
     		s.close();
@@ -368,18 +391,21 @@ public class DbDAOMySQL extends DbDAO {
 	 * @throws ParseException 
 	 */
 	public Date getPlayerLastSeen( String username ) throws ParseException{
+		Date seen = null;
 		try {
             DbConnection conn = getConnection();
             PreparedStatement s;
     		s = conn.prepareStatement ("SELECT player_quit FROM joins WHERE username = ? AND player_quit IS NOT NULL ORDER BY player_quit DESC LIMIT 1;");
+    		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
-
-    		String join = rs.getString("player_quit");
     		
-    		DateFormat formatter ;
-        	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        	Date seen = (Date)formatter.parse( join );
+    		if(rs.first()){
+	    		String join = rs.getString("player_quit");
+	    		DateFormat formatter ;
+	        	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	        	seen = (Date)formatter.parse( join );
+    		}
     		
     		rs.close();
     		s.close();
@@ -400,7 +426,6 @@ public class DbDAOMySQL extends DbDAO {
 	 * @param person
 	 * @param account_name
 	 */
-	@SuppressWarnings("null")
 	public HashMap<Float,String> getPlayerNewModQuizScores( String username ){
 		try {
             DbConnection conn = getConnection();
@@ -410,7 +435,7 @@ public class DbDAOMySQL extends DbDAO {
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
 
-    		HashMap<Float,String> scores = null;
+    		HashMap<Float,String> scores = new HashMap<Float, String>();
     		while(rs.next()){
     			scores.put( (round(rs.getFloat("score")) * 100) , rs.getString("quizdate") );
 			}

@@ -45,6 +45,7 @@ public class PlayerstatsCommandExecutor implements CommandExecutor  {
     		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.playerstats")) ){
 				try {
 					checkPlayerCounts( sender );
+					return true;
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}

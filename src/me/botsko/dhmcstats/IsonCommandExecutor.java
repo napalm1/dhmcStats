@@ -37,8 +37,9 @@ public class IsonCommandExecutor implements CommandExecutor  {
 			 if(ison != null){
 				 sender.sendMessage( plugin.playerMsg( ison + " is online" ) ); 
 			 } else {
-				 sender.sendMessage( plugin.playerError( args[0] + " is online" ) ); 
+				 sender.sendMessage( plugin.playerError( args[0] + " is not online" ) ); 
 			 }
+			 return true;
 		}
 		return false; 
 	}

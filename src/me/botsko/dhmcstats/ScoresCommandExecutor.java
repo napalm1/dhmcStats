@@ -45,21 +45,16 @@ public class ScoresCommandExecutor implements CommandExecutor  {
     		
     		Player player = (Player) sender;
     		
-    		if (args.length == 1 && (sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.rank")) ))
-				try {
-					checkScores( args[0], sender );
+    		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.scores")) ){
+    			
+    			String user = (args.length == 1 ? args[0] : player.getName());
+    			try {
+    				checkScores( user, sender );
+					return true;
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			else
-				if(player != null)
-					try {
-						checkScores( player.getName(), sender );
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+			}
     	}
 
 		return false; 

@@ -59,9 +59,9 @@ package me.botsko.dhmcstats;
  * - Updated to the new bukkit events
  * Version 0.2
  * - Massive refactor
+ * - Improved/consistent messaging styles
+ * - /rank now knows how to reply if you check your own rank
  * 
- * BUGS:
- * - Rank doesn't count current session?
  * 
  * 
  */
@@ -150,6 +150,7 @@ public class Dhmcstats extends JavaPlugin {
         // Force a timestamp for any null player_quits, which should only
 		// happen if the server crashed and the player_quit even never fired. Since
 		// we auto-reboot it's fairly safe to assume to the quit time isn't very far off.
+		getDbDAO().removeInvalidJoins();
 		getDbDAO().forceDateForNullQuits();
 		getDbDAO().forcePlaytimeForNullQuits();
 		

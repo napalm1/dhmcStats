@@ -50,7 +50,7 @@ public class DhmcstatsPlayerListener implements Listener {
         String promo = "";
         try {
         	RankCommandExecutor rce = new RankCommandExecutor(plugin);
-			promo = rce.checkQualifiesFor(username);
+			promo = rce.checkQualifiesFor( username, player );
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {

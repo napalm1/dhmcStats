@@ -44,27 +44,17 @@ public class RankCommandExecutor implements CommandExecutor  {
     		
     		Player player = (Player) sender;
     		
-    		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.rank")) ){	
-				if (args.length == 1)
-					try {
-						getQualifyFor( args[0], sender );
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				else
-					try {
-						getQualifyFor( player.getName(), sender );
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+    		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.rank")) ){
+    			
+    			String user = (args.length == 1 ? args[0] : player.getName());
+    			try {
+					getQualifyFor( user, sender );
+					return true;
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
 			}
     	}
 
@@ -81,7 +71,7 @@ public class RankCommandExecutor implements CommandExecutor  {
      * @throws ParseException
      */
     public void getQualifyFor(String username, CommandSender sender) throws SQLException, ParseException {
-    	sender.sendMessage( checkQualifiesFor(username) );
+    	sender.sendMessage( plugin.playerMsg( checkQualifiesFor( username, sender ) ) );
     }
     
     
@@ -92,7 +82,7 @@ public class RankCommandExecutor implements CommandExecutor  {
      * @throws SQLException 
      * @throws ParseException 
      */
-    public String checkQualifiesFor(String username) throws SQLException, ParseException {
+    public String checkQualifiesFor(String username, CommandSender sender) throws SQLException, ParseException {
     	
     	// Expand partials
     	String tmp = plugin.expandName(username);
@@ -104,52 +94,74 @@ public class RankCommandExecutor implements CommandExecutor  {
     	
     	// get the base join date
     	Date joined = plugin.getDbDAO().getPlayerFirstSeen(username);
-    	Date today = new Date();
-    	long diff = today.getTime() - joined.getTime();
-    	int days = (int) ((diff / 1000) / 86400);
     	
-    	// Get the play time
-    	int hours = plugin.getDbDAO().getPlaytime(username) / 3600;
+    	if(joined != null){
     	
-    	// Promotion checks per group
-    	if(plugin.getPermissions().getUser(username).inGroup("Admin")){
-    		msg = ChatColor.GOLD + username + " is an admin. Nowhere to go man!";
-    	}
-    	else if(plugin.getPermissions().getUser(username).inGroup("LeadModerator")){
-    		msg = ChatColor.GOLD + username + " is a lead mod. Ask Vive";
-    	}
-    	else if(plugin.getPermissions().getUser(username).inGroup("Moderator")){
-    		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
-    	}
-    	else if(plugin.getPermissions().getUser(username).inGroup("NewModerator")){
-    		msg = ChatColor.GOLD + username + " is a new mod. Ask Vive";
-    	}
-    	else if(plugin.getPermissions().getUser(username).inGroup("MythicalPlayer")){
-    		msg = ChatColor.GOLD + username + " is Myth. Ask Vive";
-    	}
-    	else if(plugin.getPermissions().getUser(username).inGroup("LegendaryPlayer")){
-    		msg = ChatColor.GOLD + username + " is Legendary. Check their skills, etc.";
-    	}
-    	else if(plugin.getPermissions().getUser(username).inGroup("RespectedPlayer")){
-    		if(days >= 25 && hours >= 80){
-    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.AQUA + " Legendary";
-    		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Legendary", 25, days, 80, hours);
-    		}
-    	}
-    	else if(plugin.getPermissions().getUser(username).inGroup("TrustedPlayer")){
-    		if(days >= 5 && hours >= 20){
-    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.AQUA + " Respected";
-    		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Respected", 5, days, 20, hours);
-    		}
-    	}
-    	else {
-    		if(days >= 1 && hours >= 5){
-    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.AQUA + " Trusted";
-    		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Trusted", 1, days, 5, hours);
-    		}
+	    	Date today = new Date();
+	    	long diff = today.getTime() - joined.getTime();
+	    	int days = (int) ((diff / 1000) / 86400);
+	    	
+	    	// determine who this is for
+	    	String string_intro = username + " is";
+	    	String string_qual = username + " qualifies ";
+	    	String string_remain = username + " already meets";
+	    	if (sender instanceof Player) {
+	    		Player player = (Player) sender;
+	    		if(player.getName().equalsIgnoreCase( username )){
+	    			string_intro = "You are";
+	    			string_qual = "You qualify";
+	    			string_remain = "You already meet";
+	    		}
+	    	}
+	    	
+	    	// Get the play time
+	    	int hours = plugin.getDbDAO().getPlaytime(username) / 3600;
+	    	
+	    	// Promotion checks per group
+	    	if(username.equalsIgnoreCase("viveleroi")){
+	    		msg = "Vive's rank is Pure Awesome. Silly you, checking the owner's rank.";
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("Admin")){
+	    		msg = string_intro + " an admin. Nowhere to go man!";
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("LeadModerator")){
+	    		msg = string_intro + " a lead mod. A promotion is up to Vive";
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("Moderator")){
+	    		msg = string_intro + " a mod. A promotion is up to Vive";
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("NewModerator")){
+	    		msg = string_intro + " a new mod. A promotion is up to Vive";
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("MythicalPlayer")){
+	    		msg = string_intro + " Myth. A promotion is up to Vive";
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("LegendaryPlayer")){
+	    		msg = string_intro + " Legendary. Myth rank depends on skills, and other qualifications.";
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("RespectedPlayer")){
+	    		if(days >= 25 && hours >= 80){
+	    			msg = string_qual + " for: " + ChatColor.AQUA + " Legendary";
+	    		} else {
+	    			msg = timeRemaining("Legendary", 25, days, 80, hours, string_remain);
+	    		}
+	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("TrustedPlayer")){
+	    		if(days >= 5 && hours >= 20){
+	    			msg = string_qual + " for: " + ChatColor.AQUA + " Respected";
+	    		} else {
+	    			msg = timeRemaining("Respected", 5, days, 20, hours, string_remain);
+	    		}
+	    	}
+	    	else {
+	    		if(days >= 1 && hours >= 5){
+	    			msg = string_qual + " for: " + ChatColor.AQUA + " Trusted";
+	    		} else {
+	    			msg = timeRemaining("Trusted", 1, days, 5, hours, string_remain);
+	    		}
+	    	}
+    	} else {
+    		msg = "Can't find that player. Try again.";
     	}
 		return msg;
     }
@@ -164,7 +176,7 @@ public class RankCommandExecutor implements CommandExecutor  {
      * @param hours
      * @return
      */
-    private String timeRemaining(String rank, int min_days, int days, int min_hours, int hours){
+    private String timeRemaining(String rank, int min_days, int days, int min_hours, int hours, String string_remain ){
     	
     	int remain_days = (min_days - days);
 		int remain_hrs = (min_hours - hours);
@@ -174,11 +186,11 @@ public class RankCommandExecutor implements CommandExecutor  {
 		// If days remain, but no hours
 		String time_left = " You need " + remain_days + " days, " + remain_hrs + " hours for " + rank; // default
 		if(remain_days >= 0 && remain_hrs <= 0){
-			time_left = rank+" in "+remain_days+" days. You already meet the minimum playtime hours requirement.";
+			time_left = rank+" in "+remain_days+" days. "+string_remain+" the minimum playtime hours requirement.";
 		}
 		// If hours remain, but no days
 		if(remain_days <= 0 && remain_hrs >= 0){
-			time_left = rank+" in "+remain_hrs+" hours of playtime. You already meet the minimum days requirement.";
+			time_left = rank+" in "+remain_hrs+" hours of playtime. "+string_remain+" the minimum days requirement.";
 		}
 		// If both remain
 		if(remain_days >= 0 && remain_hrs >= 0){

@@ -3,7 +3,6 @@ package me.botsko.dhmcstats;
 import java.sql.SQLException;
 import java.text.ParseException;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -47,6 +46,7 @@ public class RankallCommandExecutor implements CommandExecutor  {
     		
     		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.rank")) ){
 				rankAll( sender );
+				return true;
 			}
     	}
 
@@ -61,7 +61,7 @@ public class RankallCommandExecutor implements CommandExecutor  {
      */
     public void rankAll(CommandSender sender){
     	
-    	sender.sendMessage(ChatColor.GOLD + "Checking... (showing only those who qualify)");
+    	sender.sendMessage( plugin.playerMsg( "Checking... (showing only those who qualify)") );
     	
     	for(Player pl: plugin.getServer().getOnlinePlayers()) {
     	
@@ -79,9 +79,9 @@ public class RankallCommandExecutor implements CommandExecutor  {
 	        ){
 	        	try {
 	        		RankCommandExecutor rce = new RankCommandExecutor(plugin);
-					promo = rce.checkQualifiesFor( pl.getName() );
+					promo = rce.checkQualifiesFor( pl.getName(), sender );
 					if(promo.indexOf(" not awaiting") == -1){
-						sender.sendMessage(promo);
+						sender.sendMessage( plugin.playerMsg( promo ) );
 					}
 				} catch (SQLException e) {
 					e.printStackTrace();
