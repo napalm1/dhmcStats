@@ -1,6 +1,6 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.1.8
+version: 0.2
 softdepend: [PermissionsEx]
 commands:
    played:

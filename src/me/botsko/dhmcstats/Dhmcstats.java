@@ -57,6 +57,8 @@ package me.botsko.dhmcstats;
  * - Fixing playtime remaining messages to avoid player confusion
  * Version 0.1.8.1
  * - Updated to the new bukkit events
+ * Version 0.2
+ * - Massive refactor
  * 
  * BUGS:
  * - Rank doesn't count current session?
@@ -64,56 +66,75 @@ package me.botsko.dhmcstats;
  * 
  */
 
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
 import java.util.logging.Logger;
+
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.nijikokun.register.payment.Methods;
-
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 
 public class Dhmcstats extends JavaPlugin {
 	
 	Logger log = Logger.getLogger("Minecraft");
-	java.sql.Connection c;
+	private me.botsko.dhmcstats.db.DbDAO dao;
+	java.sql.Connection conn;
 	PermissionManager permissions;
-    private final DhmcstatsPlayerListener playerListener = new DhmcstatsPlayerListener(this);
     
     
     /**
      * Connects to the MySQL database
      */
-    protected void dbc(){
-    	
-        java.util.Properties conProperties = new java.util.Properties();
-        conProperties.put("user", "root");
-        conProperties.put("password", "");
-        conProperties.put("autoReconnect", "true");
-        conProperties.put("maxReconnects", "3");
+	protected void dbc(){
+		
+		String mysql_user = this.getConfig().getString("mysql.username");
+		String mysql_pass = this.getConfig().getString("mysql.password");
+		String mysql_hostname = this.getConfig().getString("mysql.hostname");
+		String mysql_database = this.getConfig().getString("mysql.database");
+		String mysql_port = this.getConfig().getString("mysql.port");
+		
+		this.dao = new me.botsko.dhmcstats.db.DbDAOMySQL(mysql_hostname+":"+mysql_port, mysql_database, mysql_user, mysql_pass);
 
-        try {
-        c = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/minecraft", conProperties);
-        } catch (SQLException e) {
-            log.throwing("me.botsko.dhmcstats", "dbc()", e);
-        }
     }
+	
+	
+	/**
+	 * Get the Data Access Object for the plugin
+	 * @return the DAO of the plugin
+	 */
+	public me.botsko.dhmcstats.db.DbDAO getDbDAO(){
+		return dao;
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public PermissionManager getPermissions(){
+		return permissions;
+	}
+	
+	
+	/**
+	 * 
+	 */
+	private void handleConfig(){
+		
+		// database configs
+		this.getConfig().set("mysql.hostname", 	this.getConfig().getString("mysql.hostname", "127.0.0.1"));
+		this.getConfig().set("mysql.port", 		this.getConfig().getString("mysql.port", "3306"));
+		this.getConfig().set("mysql.database", 	this.getConfig().getString("mysql.database", "minecraft"));
+		this.getConfig().set("mysql.username", 	this.getConfig().getString("mysql.username", "root"));
+		this.getConfig().set("mysql.password", 	this.getConfig().getString("mysql.password", ""));
+		
+		saveConfig();
+		
+	}
 
 
     /**
@@ -121,55 +142,37 @@ public class Dhmcstats extends JavaPlugin {
      */
 	public void onEnable(){
 		
-		log.info("[Dhmcstats]: Initializing player listeners");
+		this.log("Initializing player listeners");
+		
+		handleConfig();
 		dbc();
-	
+		
         // Force a timestamp for any null player_quits, which should only
 		// happen if the server crashed and the player_quit even never fired. Since
 		// we auto-reboot it's fairly safe to assume to the quit time isn't very far off.
-        try {
-        	java.util.Date date= new java.util.Date();
-            String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
-			String s = String.format("UPDATE joins SET player_quit = '%s' WHERE player_quit IS NULL", ts);
-	        PreparedStatement pstmt = c.prepareStatement(s);
-	        pstmt.executeUpdate();
-	        
-	        // we also need to force a playtime calculation
-			PreparedStatement ts1;
-			ts1 = c.prepareStatement ("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE playtime IS NULL");
-			ts1.executeQuery();
-			ResultSet trs = ts1.getResultSet();
-			
-			while( trs.next() ){
-				
-				Integer id = trs.getInt(1);
-				int playtime = trs.getInt(2);
-				
-				String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
-				PreparedStatement pstmt1 = c.prepareStatement(upd1);
-				pstmt1.executeUpdate();
-				pstmt1.close();
-				
-			}
-			
-			pstmt.close();
-			ts1.close();
-			trs.close();
-			c.close();
-			
-		}
-		catch ( SQLException e ) {
-			e.printStackTrace();
-		}
+		getDbDAO().forceDateForNullQuits();
+		getDbDAO().forcePlaytimeForNullQuits();
 		
-		getServer().getPluginManager().registerEvents(playerListener, this);
+		// Init event listeners
+		getServer().getPluginManager().registerEvents(new DhmcstatsPlayerListener(this), this);
 		
+		// Init command listeners
+		getCommand("played").setExecutor( (CommandExecutor) new PlayedCommandExecutor(this) );
+		getCommand("player").setExecutor( (CommandExecutor) new PlayerCommandExecutor(this) );
+		getCommand("playerstats").setExecutor( (CommandExecutor) new PlayerstatsCommandExecutor(this) );
+		getCommand("rank").setExecutor( (CommandExecutor) new RankCommandExecutor(this) );
+		getCommand("rankall").setExecutor( (CommandExecutor) new RankallCommandExecutor(this) );
+		getCommand("seen").setExecutor( (CommandExecutor) new SeenCommandExecutor(this) );
+		getCommand("ison").setExecutor( (CommandExecutor) new IsonCommandExecutor(this) );
+		getCommand("scores").setExecutor( (CommandExecutor) new ScoresCommandExecutor(this) );
+		
+		// Load PEX
 		PluginManager pm = this.getServer().getPluginManager();
 		if(pm.isPluginEnabled("PermissionsEx")){
 			permissions = PermissionsEx.getPermissionManager();
-			log.info("[Dhmcstats]: PermissionsEx found.");
+			this.log("PermissionsEx found.");
 		} else {
-			log.warning("[Dhmcstats]: PermissionsEx plugin was not found.");
+			this.log("PermissionsEx plugin was not found.");
 	    }
 	}
  
@@ -178,657 +181,9 @@ public class Dhmcstats extends JavaPlugin {
 	 * Shutdown
 	 */
 	public void onDisable(){
-		log.info("[Dhmcstats]: Stopping player listeners");
+		this.log("Stopping player listeners.");
 	}
-	
-	
-    /**
-     * Handles all of the commands.
-     * 
-     * 
-     * @param sender
-     * @param command
-     * @param label
-     * @param args
-     * @return
-     */
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-    	
-    	Player player = null;
-    	if (sender instanceof Player) {
-    		player = (Player) sender;
-    	}
-    	
-    	
-    	// /played [player]
-    	if (command.getName().equalsIgnoreCase("played")){
-    		try {
-    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.played")) ){
-    				if (args.length == 1)
-    					checkPlayTime( args[0], sender );
-    				else
-    					checkPlayTime( player.getName(), sender );
-    			}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
-    		return true;
-    	}
-    	
-    	
-    	// /player [player]
-    	if (command.getName().equalsIgnoreCase("player")){
-    		try {
-    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.player")) ){
-    				if (args.length == 1)
-    					playerStats( args[0], sender );
-    				else
-    					playerStats( player.getName(), sender );
-    			}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
-    		return true;
-    	}
-    	
-    	
-    	// /playerstats
-    	if (command.getName().equalsIgnoreCase("playerstats")){
-    		try {
-    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.playerstats")) ){
-    				checkPlayerCounts( sender );
-    			}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-    		return true;
-    	}
-    	
-    	// /seen [player]
-    	if (command.getName().equalsIgnoreCase("seen")){
-    		try {
-    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.seen")) ){
-    				if (args.length == 1)
-    					checkSeen( args[0], sender );
-    				else
-    					checkSeen( player.getName(), sender );
-    			}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    		return true;
-    	}
-    	
-    	
-    	// /rank
-    	if (command.getName().equalsIgnoreCase("rank")){
-    		try {
-    			if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.rank")) ){	
-    				if (args.length == 1)
-    					getQualifyFor( args[0], sender );
-    				else
-    					getQualifyFor( player.getName(), sender );
-    			}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
-    		return true;
-    	}
-    	
-    	
-    	// /rankall
-    	if (command.getName().equalsIgnoreCase("rankall")){
-    		if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.rank")) ){
-				rankAll( sender );
-			}
-    		return true;
-    	}
-    	
-    	
-    	// /ison
-    	if (command.getName().equalsIgnoreCase("ison")){
-    		if(sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.ison")) ){	
-				if (args.length == 1){
-					 String ison = expandName(args[0]);
-					 if(ison != null){
-						 sender.sendMessage( ison + " is online" ); 
-					 } else {
-						 sender.sendMessage( args[0] + " is not online" ); 
-					 }
-				}
-			}
-    		return true;
-    	}
-    	
-    	
-    	// /scores [player]
-    	if (command.getName().equalsIgnoreCase("scores")){
-    		try {
-				if (args.length == 1 && (sender instanceof ConsoleCommandSender || (player != null && permissions.has(player, "dhmcstats.rank")) ))
-					checkScores( args[0], sender );
-				else
-					if(player != null)
-						checkScores( player.getName(), sender );
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-    		return true;
-    	}
 
-    	return false;
-    }
-    
-    
-    /**
-     * Returns a bunch of player stats
-     * 
-     * @param username
-     * @throws SQLException 
-     * @throws ParseException 
-     */
-    public void playerStats(String username, CommandSender sender) throws SQLException, ParseException {
-    	
-    	// Expand partials
-    	String tmp = expandName(username);
-    	if(tmp != null){
-    		username = tmp;
-    	}
-    
-    	checkPlayTime(username, sender);
-    	checkSeen(username, sender);
-    	getQualifyFor(username, sender);
-    	
-    	Double bal = Methods.getMethod().getAccount( username ).balance();
-    	sender.sendMessage(ChatColor.GOLD + "Money: $" + bal);
-    	
-    	PermissionUser user = permissions.getUser( username );
-    	
-    	String delim = "";
-        for ( PermissionGroup group : user.getGroups()) {
-            delim += group.getName() + ", ";
-        }
-
-        sender.sendMessage(ChatColor.GOLD + "Groups: " + delim);
-    	
-    }
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     * @throws ParseException 
-     */
-    public void checkPlayTime(String username, CommandSender sender) throws SQLException, ParseException {
-    	
-    	// Expand partials
-    	String tmp = expandName(username);
-    	if(tmp != null){
-    		username = tmp;
-    	}
-    
-		int playtime = getPlayTime(username);
-		int[] times = splitToComponentTimes(playtime);
-		sender.sendMessage(ChatColor.GOLD + username + " has played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
-		
-    }
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     * @throws ParseException 
-     */
-    public int getPlayTime(String username) throws SQLException, ParseException{
-    	
-    	if (c == null || c.isClosed()) dbc();
-    	
-    	// query for the null quit record for this player
-		PreparedStatement s;
-		s = c.prepareStatement ("SELECT SUM(playtime) as playtime FROM joins WHERE username = ?");
-		s.setString(1, username);
-		s.executeQuery();
-		ResultSet rs = s.getResultSet();
-		
-		try {
-			rs.first();
-			int before_current = rs.getInt(1);
-			
-			// We also need to pull any incomplete join and calc up-to-the-minute playtime
-			PreparedStatement s1;
-			s1 = c.prepareStatement ("SELECT player_join FROM joins WHERE username = ? AND player_quit IS NULL");
-			s1.setString(1, username);
-			s1.executeQuery();
-			ResultSet rs1 = s1.getResultSet();
-			
-			long session_hours = 0;
-			try {
-				if(rs1.first()){
-					String session_started = rs1.getString("player_join");
-					
-					DateFormat formatter ;
-			    	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			    	Date joined = (Date)formatter.parse( session_started );
-			    	Date today = new Date();
-			    	session_hours = today.getTime() - joined.getTime();
-			    	session_hours = session_hours / 1000;
-				}
-			}
-			catch ( SQLException e ) {
-				e.printStackTrace();
-			}
-			
-			rs1.close();
-			s1.close();
-			
-			return (int) (before_current + session_hours);
-			
-		}
-		catch ( SQLException e ) {
-			e.printStackTrace();
-		}
-		
-		rs.close();
-		s.close();
-		c.close();
-		return 0;
-		
-    }
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     */
-    public void checkPlayerCounts(CommandSender sender) throws SQLException{
-    	
-    	if (c == null || c.isClosed()) dbc();
-    	
-    	// Pull how many players joined in total
-		PreparedStatement s;
-		s = c.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins`");
-		s.executeQuery();
-		ResultSet rs = s.getResultSet();
-		
-		Integer total = 0;
-		while( rs.next() ){
-			total = rs.getInt(1);
-		}
-		
-		rs.close();
-		s.close();
-    	
-    	// Pull how many players were online today
-		PreparedStatement s1;
-		s1 = c.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
-		s1.executeQuery();
-		ResultSet rs1 = s1.getResultSet();
-		
-		Integer playedtoday = 0;
-		while( rs1.next() ){
-			playedtoday = rs1.getInt(1);
-		}
-		
-		rs1.close();
-		s1.close();
-		c.close();
-
-		sender.sendMessage(ChatColor.GOLD  + "Players Online: " + getOnlineCount());
-		sender.sendMessage(ChatColor.GOLD  + "Total Players: " + total);
-		sender.sendMessage(ChatColor.GOLD  + "Unique Today: " + playedtoday);
-		
-    }
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     */
-    public void checkForums(Player player) throws SQLException{
-    	
-    	if (c == null || c.isClosed()) dbc();
-    	
-    	String username = player.getName();
-    	
-    	// query for the null quit record for this player
-		PreparedStatement s;
-		s = c.prepareStatement ("SELECT id FROM users WHERE username = ?");
-		s.setString(1, username);
-		s.executeQuery();
-		ResultSet rs = s.getResultSet();
-		
-		if(!rs.next()){
-			player.sendMessage(ChatColor.AQUA + "You haven't joined our forums at http://dhmc.us. Ideas? Concerns? You really need to join!");
-		}
-		
-		rs.close();
-		s.close();
-		c.close();
-		
-    }
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     * @throws ParseException 
-     */
-    public void checkSeen(String username, CommandSender sender) throws SQLException, ParseException{
-    	
-    	// Expand partials
-    	String tmp = expandName(username);
-    	if(tmp != null){
-    		username = tmp;
-    	}
-
-    	DateFormat formatter ;
-    	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	Date joined = (Date)formatter.parse( checkFirstSeen(username) );
-    	sender.sendMessage(ChatColor.GOLD + "Joined " + joined);
-   
-    	DateFormat formatter1 ;
-    	formatter1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	Date seen = (Date)formatter1.parse( checkLastSeen(username) );
-    	sender.sendMessage(ChatColor.GOLD + "Last Seen " + seen);
-		
-    }
-    
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     */
-    public String checkFirstSeen(String username) throws SQLException{
-    	
-    	if (c == null || c.isClosed()) dbc();
-    	
-		PreparedStatement s;
-		s = c.prepareStatement ("SELECT player_join FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
-		s.setString(1, username);
-		s.executeQuery();
-		ResultSet rs = s.getResultSet();
-		
-		try {
-			rs.first();
-			String join = rs.getString("player_join");
-			rs.close();
-			s.close();
-			c.close();
-			return join;
-			
-		}
-		catch ( SQLException e ) {
-			e.printStackTrace();
-		}
-		
-		rs.close();
-		s.close();
-		c.close();
-		return "";
-		
-    }
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     */
-    public String checkLastSeen(String username) throws SQLException{
-    	
-    	if (c == null || c.isClosed()) dbc();
-    	
-		PreparedStatement s;
-		s = c.prepareStatement ("SELECT player_quit FROM joins WHERE username = ? AND player_quit IS NOT NULL ORDER BY player_quit DESC LIMIT 1;");
-		s.setString(1, username);
-		s.executeQuery();
-		ResultSet rs = s.getResultSet();
-		
-		try {
-			rs.first();
-			String quit = rs.getString("player_quit");
-			rs.close();
-			s.close();
-			c.close();
-			return quit;
-		}
-		catch ( SQLException e ) {
-			e.printStackTrace();
-		}
-		
-		rs.close();
-		s.close();
-		c.close();
-		return "";
-		
-    }
-    
-    
-    /**
-     * Check all online players for promo
-     * @param sender
-     */
-    public void rankAll(CommandSender sender){
-    	
-    	sender.sendMessage(ChatColor.GOLD + "Checking... (showing only those who qualify)");
-    	
-    	for(Player pl: getServer().getOnlinePlayers()) {
-    	
-	    	// Check the user qualifies for any rank, alert mods
-	        String promo = "";
-	        PermissionUser user = permissions.getUser( pl.getName() );
-	        if( 
-	        	!user.inGroup( "LegendaryPlayer" ) &&
-	        	!user.inGroup( "MythicalPlayer" ) &&
-	        	!user.inGroup( "NewModerator" ) &&
-	        	!user.inGroup( "Moderator") &&
-	        	!user.inGroup( "LeadModerator" ) &&
-	        	!user.inGroup( "WorldEditor" ) &&
-	        	!user.inGroup( "Admin" )
-	        ){
-	        	try {
-					promo = checkQualifiesFor( pl.getName() );
-					if(promo.indexOf(" not awaiting") == -1){
-						sender.sendMessage(promo);
-					}
-				} catch (SQLException e) {
-					e.printStackTrace();
-				} catch (ParseException e) {
-					e.printStackTrace();
-				}
-	        }
-    	}
-    }
-    
-    
-    /**
-     * 
-     * @param username
-     * @param sender
-     * @throws SQLException
-     * @throws ParseException
-     */
-    public void getQualifyFor(String username, CommandSender sender) throws SQLException, ParseException {
-    	sender.sendMessage( checkQualifiesFor(username) );
-    }
-    
-    
-    /**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     * @throws ParseException 
-     */
-    public String checkQualifiesFor(String username) throws SQLException, ParseException {
-    	
-    	// Expand partials
-    	String tmp = expandName(username);
-    	if(tmp != null){
-    		username = tmp;
-    	}
-    	
-    	String msg = "";
-    	
-    	// get the base join date
-    	DateFormat formatter ;
-    	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	Date joined = (Date)formatter.parse( checkFirstSeen(username) );
-    	Date today = new Date();
-    	long diff = today.getTime() - joined.getTime();
-    	int days = (int) ((diff / 1000) / 86400);
-    	
-    	// Get the play time
-    	int hours = getPlayTime(username) / 3600;
-    	
-    	// Promotion checks per group
-    	if(permissions.getUser(username).inGroup("Admin")){
-    		msg = ChatColor.GOLD + username + " is an admin. Nowhere to go man!";
-    	}
-    	else if(permissions.getUser(username).inGroup("LeadModerator")){
-    		msg = ChatColor.GOLD + username + " is a lead mod. Ask Vive";
-    	}
-    	else if(permissions.getUser(username).inGroup("Moderator")){
-    		msg = ChatColor.GOLD + username + " is a mod. Ask Vive";
-    	}
-    	else if(permissions.getUser(username).inGroup("NewModerator")){
-    		msg = ChatColor.GOLD + username + " is a new mod. Ask Vive";
-    	}
-    	else if(permissions.getUser(username).inGroup("MythicalPlayer")){
-    		msg = ChatColor.GOLD + username + " is Myth. Ask Vive";
-    	}
-    	else if(permissions.getUser(username).inGroup("LegendaryPlayer")){
-    		msg = ChatColor.GOLD + username + " is Legendary. Check their skills, etc.";
-    	}
-    	else if(permissions.getUser(username).inGroup("RespectedPlayer")){
-    		if(days >= 25 && hours >= 80){
-    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Legendary";
-    		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Legendary", 25, days, 80, hours);
-    		}
-    	}
-    	else if(permissions.getUser(username).inGroup("TrustedPlayer")){
-    		if(days >= 5 && hours >= 20){
-    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Respected";
-    		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Respected", 5, days, 20, hours);
-    		}
-    	}
-    	else {
-    		if(days >= 1 && hours >= 5){
-    			msg = ChatColor.GOLD + username + " qualifies for: " + ChatColor.WHITE + " Trusted";
-    		} else {
-    			msg = ChatColor.GOLD + username + " is not awaiting promotion. " + timeRemaining("Trusted", 1, days, 5, hours);
-    		}
-    	}
-		return msg;
-    }
-    
-    
-    /**
-     * Improves the message about remaining time to avoid confusion with the negative numbers.
-     * @param rank
-     * @param min_days
-     * @param days
-     * @param min_hours
-     * @param hours
-     * @return
-     */
-    private String timeRemaining(String rank, int min_days, int days, int min_hours, int hours){
-    	
-    	int remain_days = (min_days - days);
-		int remain_hrs = (min_hours - hours);
-		
-		log.info("[DHMC]: Rank Check: remaining days: " + remain_days + " remaining hours: " + remain_hrs);
-		
-		// If days remain, but no hours
-		String time_left = " You need " + remain_days + " days, " + remain_hrs + " hours for " + rank; // default
-		if(remain_days >= 0 && remain_hrs <= 0){
-			time_left = rank+" in "+remain_days+" days. You already meet the minimum playtime hours requirement.";
-		}
-		// If hours remain, but no days
-		if(remain_days <= 0 && remain_hrs >= 0){
-			time_left = rank+" in "+remain_hrs+" hours of playtime. You already meet the minimum days requirement.";
-		}
-		// If both remain
-		if(remain_days >= 0 && remain_hrs >= 0){
-			time_left = rank+" in "+remain_hrs+" hours of playtime, in at least " + remain_days + " more days (since joined).";
-		}
-		
-		return time_left;
-    	
-    }
-    
-    
-    /**
-     * Checks the newmod scores of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     */
-    public void checkScores(String username, CommandSender sender) throws SQLException{
-    	
-    	if (c == null || c.isClosed()) dbc();
-    	
-    	sender.sendMessage(ChatColor.GOLD + "NewMod Quiz scores for " + username + ": ");
-    	
-		PreparedStatement s;
-		s = c.prepareStatement ("SELECT score, DATE_FORMAT(quiz_newmod.date_created,'%m/%d/%Y') as quizdate FROM quiz_newmod LEFT JOIN users ON users.id = quiz_newmod.user_id WHERE users.username = ? ORDER BY quiz_newmod.date_created;");
-		s.setString(1, username);
-		s.executeQuery();
-		ResultSet rs = s.getResultSet();
-		
-		try {
-			while(rs.next()){
-				Float score = round(rs.getFloat("score")) * 100;
-				sender.sendMessage(ChatColor.GOLD + rs.getString("quizdate") + ": " + score + "%");
-			}
-			rs.close();
-			s.close();
-			c.close();
-		}
-		catch ( SQLException e ) {
-			e.printStackTrace();
-		}
-		
-		rs.close();
-		s.close();
-		c.close();
-
-    }
-    
-    
-    /**
-     * 
-     * @param val
-     * @return
-     */
-    public float round( Float val ){
-    	return (float) (Math.round( val *100.0) / 100.0);
-    }
-    
     
     /**
      * 
@@ -869,20 +224,51 @@ public class Dhmcstats extends JavaPlugin {
         return null;
     }
     
-    
+
     /**
-     * Convert seconds into hours/mins/secs
-     * 
-     * @param biggy
-     * @return
-     */
-    public static int[] splitToComponentTimes(int biggy){
-        int hours = (int) biggy / 3600;
-        int remainder = (int) biggy - hours * 3600;
-        int mins = remainder / 60;
-        remainder = remainder - mins * 60;
-        int secs = remainder;
-        int[] ints = {hours , mins , secs};
-        return ints;
-    }
+	 * 
+	 * @param msg
+	 * @return
+	 */
+	public String playerMsg(String msg){
+		return ChatColor.GOLD + "[dhmc]: " + ChatColor.WHITE + msg;
+	}
+	
+	
+	/**
+	 * 
+	 * @param msg
+	 * @return
+	 */
+	public String playerError(String msg){
+		return ChatColor.GOLD + "[dhmc]: " + ChatColor.RED + msg;
+	}
+	
+	
+	/**
+	 * 
+	 * @param message
+	 */
+	public void log(String message){
+		log.info("[dhmcStats]: " + message);
+	}
+	
+	
+	/**
+	 * 
+	 * @param message
+	 */
+	public void debug(String message){
+		if(this.getConfig().getBoolean("debug")){
+			log.info("[dhmcStats]: " + message);
+		}
+	}
+    
+    
+	/**
+	 * Disable the plugin
+	 */
+	public static void disablePlugin(){
+//		this.setEnabled(false);
+	}
 }
