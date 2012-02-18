@@ -61,8 +61,15 @@ package me.botsko.dhmcstats;
  * - Massive refactor
  * - Improved/consistent messaging styles
  * - /rank now knows how to reply if you check your own rank
+ * - Older, invalid join dates are removed automatically. (May likely not need this on each boot)
  * 
  * 
+ * IDEAS:
+ * 
+ * - Money history for week
+ * - mcmmo stats
+ * - move splitToComponentTimes to lib, it's now shared
+ * - take out invalid join date tool?
  * 
  */
 
@@ -159,6 +166,7 @@ public class Dhmcstats extends JavaPlugin {
 		
 		// Init command listeners
 		getCommand("played").setExecutor( (CommandExecutor) new PlayedCommandExecutor(this) );
+		getCommand("playhist").setExecutor( (CommandExecutor) new PlayhistoryCommandExecutor(this) );
 		getCommand("player").setExecutor( (CommandExecutor) new PlayerCommandExecutor(this) );
 		getCommand("playerstats").setExecutor( (CommandExecutor) new PlayerstatsCommandExecutor(this) );
 		getCommand("rank").setExecutor( (CommandExecutor) new RankCommandExecutor(this) );

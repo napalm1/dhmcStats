@@ -1,9 +1,11 @@
 package me.botsko.dhmcstats;
 
 import java.sql.SQLException;
-import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -11,7 +13,7 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
-public class PlayedCommandExecutor implements CommandExecutor  {
+public class PlayhistoryCommandExecutor implements CommandExecutor  {
 	
 	private Dhmcstats plugin;
 	
@@ -20,7 +22,7 @@ public class PlayedCommandExecutor implements CommandExecutor  {
 	 * @param plugin
 	 * @return 
 	 */
-	public PlayedCommandExecutor(Dhmcstats plugin) {
+	public PlayhistoryCommandExecutor(Dhmcstats plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -46,11 +48,9 @@ public class PlayedCommandExecutor implements CommandExecutor  {
     		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.played")) ){
 	    		String user = (args.length == 1 ? args[0] : player.getName());
 				try {
-					checkPlayTime( user, sender );
+					checkPlayHistory( user, sender );
 					return true;
 				} catch (SQLException e) {
-					e.printStackTrace();
-				} catch (ParseException e) {
 					e.printStackTrace();
 				}
     		}
@@ -59,27 +59,26 @@ public class PlayedCommandExecutor implements CommandExecutor  {
 		return false; 
 		
 	}
-	
-	
-	/**
-     * Checks the total playtime of a user
-     * 
-     * @param username
-     * @throws SQLException 
-     * @throws ParseException 
-     */
-    private void checkPlayTime(String username, CommandSender sender) throws SQLException, ParseException {
-    	
-    	// Expand partials
-    	String tmp = plugin.expandName(username);
-    	if(tmp != null){
-    		username = tmp;
-    	}
     
-		int playtime = plugin.getDbDAO().getPlaytime(username);
-		int[] times = splitToComponentTimes(playtime);
-		sender.sendMessage(ChatColor.GOLD + username + " has played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
-		
+    
+	/**
+	 * 
+	 * @param username
+	 * @param sender
+	 * @throws SQLException
+	 */
+    public void checkPlayHistory(String username, CommandSender sender) throws SQLException{
+    	
+    	sender.sendMessage( plugin.playerMsg( "Most recent 7 days of playtime for " + username + ": " ) );
+    	
+    	HashMap<Integer,String> scores = plugin.getDbDAO().getPayerPlaytimeHistory(username);
+    	Iterator<Entry<Integer, String>> it = scores.entrySet().iterator();
+
+    	while (it.hasNext()) {
+    		Map.Entry<Integer, String> pairs = (Map.Entry<Integer, String>)it.next();
+    		int[] times = splitToComponentTimes(pairs.getKey());
+    		sender.sendMessage( plugin.playerMsg( pairs.getValue() + ": " + times[0] + "hrs, " + times[1] + " mins"  ) );
+    	}
     }
     
     

@@ -58,6 +58,7 @@ public abstract class DbDAO {
     public abstract Date getPlayerFirstSeen( String username ) throws ParseException;
     public abstract Date getPlayerLastSeen( String username ) throws ParseException;
     public abstract HashMap<Float,String> getPlayerNewModQuizScores( String username );
+    public abstract HashMap<Integer,String> getPayerPlaytimeHistory( String username );
     
     /**
 	 * Get a database connection

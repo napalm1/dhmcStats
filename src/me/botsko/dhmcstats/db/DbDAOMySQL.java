@@ -455,6 +455,39 @@ public class DbDAOMySQL extends DbDAO {
 	
 	
 	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public HashMap<Integer,String> getPayerPlaytimeHistory( String username ){
+		try {
+            DbConnection conn = getConnection();
+            PreparedStatement s;
+    		s = conn.prepareStatement ("SELECT DATE_FORMAT(joins.player_join,'%Y-%m-%d') as playdate, SUM(playtime) as playtime FROM joins WHERE username = ? GROUP BY DATE_FORMAT(joins.player_join,'%Y-%m-%d') ORDER BY joins.player_join DESC LIMIT 7;");
+    		s.setString(1, username);
+    		s.executeQuery();
+    		ResultSet rs = s.getResultSet();
+
+    		HashMap<Integer,String> scores = new HashMap<Integer, String>();
+    		while(rs.next()){
+    			scores.put( rs.getInt("playtime"), rs.getString("playdate") );
+			}
+    		
+    		rs.close();
+    		s.close();
+            conn.close();
+            
+            return scores;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+		return null;
+	}
+	
+	
+	/**
      * 
      * @param val
      * @return
