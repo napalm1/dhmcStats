@@ -58,9 +58,6 @@ public class DhmcstatsPlayerListener implements Listener {
         String ip = player.getAddress().getAddress().getHostAddress().toString();
 		plugin.getDbDAO().registerPlayerJoin( username, ts, ip, plugin.getOnlineCount() );
         
-
-      // CHECK FORUMS
-        
         
         // Check the user qualifies for any rank, alert mods
         String promo = "";
@@ -73,7 +70,8 @@ public class DhmcstatsPlayerListener implements Listener {
 			e.printStackTrace();
 		}
         // if string not empty, notify lead mods
-        if(promo != "" && promo.indexOf(" admin") == -1 && promo.indexOf(" Ask Vive") == -1 && promo.indexOf(" Legendary") == -1 && promo.indexOf(" not awaiting") == -1 && promo.indexOf("Pure Awesome.") == -1){
+        if(promo.indexOf("qualify") > 1 || promo.indexOf("qualifies") > 1){
+        	promo = promo.replace("You", username);
 	        for(Player pl: plugin.getServer().getOnlinePlayers()) {
 	        	PermissionUser user = plugin.permissions.getUser( pl.getName() );
 	            if(user.inGroup( "LeadModerator" ) || user.inGroup( "Admin" )) {

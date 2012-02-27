@@ -80,7 +80,7 @@ public class RankallCommandExecutor implements CommandExecutor  {
 	        	try {
 	        		RankCommandExecutor rce = new RankCommandExecutor(plugin);
 					promo = rce.checkQualifiesFor( pl.getName(), sender );
-					if(promo.indexOf(" not awaiting") == -1){
+					if(promo.indexOf("qualify") > 1 || promo.indexOf("qualifies") > 1){
 						sender.sendMessage( plugin.playerMsg( promo ) );
 					}
 				} catch (SQLException e) {
