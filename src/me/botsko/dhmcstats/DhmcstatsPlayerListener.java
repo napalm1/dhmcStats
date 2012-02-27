@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -24,6 +25,21 @@ public class DhmcstatsPlayerListener implements Listener {
      */
     public DhmcstatsPlayerListener(Dhmcstats instance) {
         plugin = instance;
+    }
+    
+    
+    /**
+     * Log all commands
+     * @param event
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        Player player = event.getPlayer();
+        String cmd = event.getMessage();
+        double x = Math.floor( player.getLocation().getX() );
+        double y = Math.floor( player.getLocation().getY() );
+        double z = Math.floor( player.getLocation().getZ() );
+        plugin.log( "[Command] " + player.getName() + " " + cmd + " @" + player.getWorld().getName() + " x:" + x + " y:" + y + " z:" + z);
     }
     
     
