@@ -3,7 +3,11 @@ package me.botsko.dhmcstats;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
+import me.botsko.dhmcstats.db.Warnings;
+
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -58,7 +62,6 @@ public class DhmcstatsPlayerListener implements Listener {
         String ip = player.getAddress().getAddress().getHostAddress().toString();
 		plugin.getDbDAO().registerPlayerJoin( username, ts, ip, plugin.getOnlineCount() );
         
-        
         // Check the user qualifies for any rank, alert mods
         String promo = "";
         try {
@@ -75,9 +78,20 @@ public class DhmcstatsPlayerListener implements Listener {
 	        for(Player pl: plugin.getServer().getOnlinePlayers()) {
 	        	PermissionUser user = plugin.permissions.getUser( pl.getName() );
 	            if(user.inGroup( "LeadModerator" ) || user.inGroup( "Admin" )) {
-	            	pl.sendMessage( promo);
+	            	pl.sendMessage(promo);
 	            }
 	        }
+        }
+        
+        
+        // If the user has three or more warnings, alert staff
+        List<Warnings> warnings = plugin.getDbDAO().getPlayerWarnings(username);
+        if(warnings.size() >= 3){
+        	for(Player pl: plugin.getServer().getOnlinePlayers()) {
+        		if(plugin.getPermissions().has(pl, "dhmcstats.warn")){
+        			pl.sendMessage( plugin.playerMsg(username + " now has three warnings. " + ChatColor.RED + "Action must be taken.") );
+        		}
+        	}
         }
     }
     

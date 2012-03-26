@@ -25,12 +25,16 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
 
-public class DbDAOMySQL extends DbDAO {
+public class DbDAOMySQL {
+	
+	Dhmcstats plugin;
 	
 	/**
 	 * 
@@ -39,25 +43,29 @@ public class DbDAOMySQL extends DbDAO {
 	 * @param username
 	 * @param password
 	 */
-    public DbDAOMySQL(String url, String dbName, String username, String password) {
-        super("com.mysql.jdbc.Driver", "jdbc:mysql://"+url+"/"+dbName, username, password);
-        setUp();
+    public DbDAOMySQL( Dhmcstats plugin ) {
+    	this.plugin = plugin;
     }
+    
+    
+    
+    
+    
     
     /**
      * Create tables if they do not exist
      */
     public void setUp(){
 //        try{
-//            DbConnection conn = getConnection();
-//            if(conn != null){
-//                Statement st = conn.createStatement();
+//            Db
+//            if(plugin.conn != null){
+//                Statement st = plugin.conn.createStatement();
 //                String table = "CREATE TABLE IF NOT EXISTS `finance_account_users` (`id` int(10) unsigned NOT NULL auto_increment,`account_name` varchar(155) NOT NULL,`username` varchar(55) NOT NULL,`is_owner` tinyint(1) NOT NULL default '0', PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;";
 //                st.executeUpdate(table);
-//                conn.close();
+//                plugin.conn.close();
 //            }
 //            else{
-//                System.err.println("[finance] - MySQL connection problem");
+//                System.err.println("[finance] - MySQL plugin.connection problem");
 //                Dhmcstats.disablePlugin();
 //            }
 //        }
@@ -75,12 +83,12 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public void removeInvalidJoins(){
 		try {
-            DbConnection conn = getConnection();
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
 			String str = String.format("DELETE FROM joins WHERE player_join = '0000-00-00 00:00:00'");
-	        PreparedStatement s = conn.prepareStatement( str );
+	        PreparedStatement s = plugin.conn.prepareStatement( str );
     		s.executeUpdate();
     		s.close();
-            conn.close();
+            plugin.conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             Dhmcstats.disablePlugin();
@@ -95,14 +103,14 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public void forceDateForNullQuits(){
 		try {
-            DbConnection conn = getConnection();
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
             java.util.Date date= new java.util.Date();
     		String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
 			String str = String.format("UPDATE joins SET player_quit = '%s' WHERE player_quit IS NULL", ts);
-	        PreparedStatement s = conn.prepareStatement( str );
+	        PreparedStatement s = plugin.conn.prepareStatement( str );
     		s.executeUpdate();
     		s.close();
-            conn.close();
+            plugin.conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             Dhmcstats.disablePlugin();
@@ -117,9 +125,9 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public void forcePlaytimeForNullQuits(){
 		try {
-            DbConnection conn = getConnection();
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
 			String str = String.format("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE playtime IS NULL");
-	        PreparedStatement s = conn.prepareStatement( str );
+	        PreparedStatement s = plugin.conn.prepareStatement( str );
     		s.executeQuery();
 			ResultSet trs = s.getResultSet();
 			// Update all null playtime records with playtime
@@ -127,12 +135,78 @@ public class DbDAOMySQL extends DbDAO {
 				Integer id = trs.getInt(1);
 				int playtime = trs.getInt(2);
 				String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
-				PreparedStatement pstmt1 = conn.prepareStatement(upd1);
+				PreparedStatement pstmt1 = plugin.conn.prepareStatement(upd1);
 				pstmt1.executeUpdate();
 				pstmt1.close();
 			}
+			trs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public void forceDateForOfflinePlayers( String users ){
+		try {
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			
+			if(!users.isEmpty()){
+				users = " AND username NOT IN ("+users+")";
+			}
+            
+            java.util.Date date= new java.util.Date();
+    		String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
+			String str = String.format("UPDATE joins SET player_quit = '%s' WHERE player_quit IS NULL%s", ts, users);
+	        PreparedStatement s = plugin.conn.prepareStatement( str );
+    		s.executeUpdate();
+    		s.close();
+            plugin.conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public void forcePlaytimeForOfflinePlayers( String users ){
+		try {
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			
+			if(!users.isEmpty()){
+				users = " AND username NOT IN ("+users+")";
+			}
+            
+			String str = String.format("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE playtime IS NULL%s", users);
+	        PreparedStatement s = plugin.conn.prepareStatement( str );
+    		s.executeQuery();
+			ResultSet trs = s.getResultSet();
+			// Update all null playtime records with playtime
+			while( trs.next() ){
+				Integer id = trs.getInt(1);
+				int playtime = trs.getInt(2);
+				String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
+				PreparedStatement pstmt1 = plugin.conn.prepareStatement(upd1);
+				pstmt1.executeUpdate();
+				pstmt1.close();
+			}
+			trs.close();
+    		s.close();
+            plugin.conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             Dhmcstats.disablePlugin();
@@ -147,12 +221,12 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public void registerPlayerJoin( String username, String timestamp, String ip, int online_count ){
 		try {
-            DbConnection conn = getConnection();
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
             String str = String.format("INSERT INTO joins (username,player_join,ip,player_count) VALUES ('%s','%s','%s','%d')", username, timestamp, ip, online_count );
-	        PreparedStatement s = conn.prepareStatement(str);
+	        PreparedStatement s = plugin.conn.prepareStatement(str);
 	        s.executeUpdate();
     		s.close();
-            conn.close();
+            plugin.conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             Dhmcstats.disablePlugin();
@@ -167,10 +241,11 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public void registerPlayerQuit( String username, String timestamp ){
 		try {
-            DbConnection conn = getConnection();
+            
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
             
  			PreparedStatement s;
- 			s = conn.prepareStatement ("SELECT id FROM joins WHERE username = ? AND player_quit IS NULL");
+ 			s = plugin.conn.prepareStatement ("SELECT id FROM joins WHERE username = ? AND player_quit IS NULL");
  			s.setString(1, username);
  			s.executeQuery();
  			ResultSet rs = s.getResultSet();
@@ -180,13 +255,13 @@ public class DbDAOMySQL extends DbDAO {
  				Integer id = rs.getInt(1);
  			
  				String upd = String.format("UPDATE joins SET player_quit = '%s' WHERE id = '%d'", timestamp, id);
- 				PreparedStatement pstmt = conn.prepareStatement(upd);
+ 				PreparedStatement pstmt = plugin.conn.prepareStatement(upd);
  				pstmt.executeUpdate();
  				pstmt.close();
  	        
  				// now calculate the time spent online between this quit and join
  				PreparedStatement ts1;
- 				ts1 = conn.prepareStatement ("SELECT TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE id = ?");
+ 				ts1 = plugin.conn.prepareStatement ("SELECT TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE id = ?");
  				ts1.setInt(1, id);
  				ts1.executeQuery();
  				ResultSet trs = ts1.getResultSet();
@@ -196,7 +271,7 @@ public class DbDAOMySQL extends DbDAO {
  					int playtime = trs.getInt(1);
  					
  					String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
- 					PreparedStatement pstmt1 = conn.prepareStatement(upd1);
+ 					PreparedStatement pstmt1 = plugin.conn.prepareStatement(upd1);
  					pstmt1.executeUpdate();
  					pstmt1.close();
  					
@@ -208,7 +283,7 @@ public class DbDAOMySQL extends DbDAO {
     
  			rs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             Dhmcstats.disablePlugin();
@@ -223,9 +298,11 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public int getPlayerJoinCount(){
 		try {
-            DbConnection conn = getConnection();
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+            
             PreparedStatement s;
-    		s = conn.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins`");
+    		s = plugin.conn.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins`");
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
     		
@@ -235,7 +312,7 @@ public class DbDAOMySQL extends DbDAO {
     		}
     		rs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
             
             return total;
             
@@ -254,9 +331,11 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public int getPlayerJoinTodayCount(){
 		try {
-            DbConnection conn = getConnection();
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+            
             PreparedStatement s;
-    		s = conn.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
+    		s = plugin.conn.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
     		
@@ -266,7 +345,7 @@ public class DbDAOMySQL extends DbDAO {
     		}
     		rs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
             
             return total;
             
@@ -287,11 +366,11 @@ public class DbDAOMySQL extends DbDAO {
 	public int getPlaytime( String username ) throws ParseException{
 		try {
 			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
 			
-			DbConnection conn = getConnection();
 			// query for the null quit record for this player
 			PreparedStatement s;
-			s = conn.prepareStatement ("SELECT SUM(playtime) as playtime FROM joins WHERE username = ?");
+			s = plugin.conn.prepareStatement ("SELECT SUM(playtime) as playtime FROM joins WHERE username = ?");
 			s.setString(1, username);
 			s.executeQuery();
 			ResultSet rs = s.getResultSet();
@@ -302,7 +381,7 @@ public class DbDAOMySQL extends DbDAO {
 				
 				// We also need to pull any incomplete join and calc up-to-the-minute playtime
 				PreparedStatement s1;
-				s1 = conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? AND player_quit IS NULL");
+				s1 = plugin.conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? AND player_quit IS NULL");
 				s1.setString(1, username);
 				s1.executeQuery();
 				ResultSet rs1 = s1.getResultSet();
@@ -336,7 +415,7 @@ public class DbDAOMySQL extends DbDAO {
 			
 			rs.close();
 			s.close();
-			conn.close();
+			plugin.conn.close();
 			return 0;
 
         } catch (SQLException e) {
@@ -356,9 +435,11 @@ public class DbDAOMySQL extends DbDAO {
 	public Date getPlayerFirstSeen( String username ) throws ParseException{
 		Date joined = null;
 		try {
-            DbConnection conn = getConnection();
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+            
             PreparedStatement s;
-    		s = conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
+    		s = plugin.conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
     		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
@@ -372,7 +453,7 @@ public class DbDAOMySQL extends DbDAO {
     		
     		rs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
             
             return joined;
             
@@ -393,9 +474,11 @@ public class DbDAOMySQL extends DbDAO {
 	public Date getPlayerLastSeen( String username ) throws ParseException{
 		Date seen = null;
 		try {
-            DbConnection conn = getConnection();
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+            
             PreparedStatement s;
-    		s = conn.prepareStatement ("SELECT player_quit FROM joins WHERE username = ? AND player_quit IS NOT NULL ORDER BY player_quit DESC LIMIT 1;");
+    		s = plugin.conn.prepareStatement ("SELECT player_quit FROM joins WHERE username = ? AND player_quit IS NOT NULL ORDER BY player_quit DESC LIMIT 1;");
     		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
@@ -409,7 +492,7 @@ public class DbDAOMySQL extends DbDAO {
     		
     		rs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
             
             return seen;
             
@@ -428,9 +511,11 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public HashMap<Float,String> getPlayerNewModQuizScores( String username ){
 		try {
-            DbConnection conn = getConnection();
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+            
             PreparedStatement s;
-    		s = conn.prepareStatement ("SELECT score, DATE_FORMAT(quiz_newmod.date_created,'%m/%d/%Y') as quizdate FROM quiz_newmod LEFT JOIN users ON users.id = quiz_newmod.user_id WHERE users.username = ? ORDER BY quiz_newmod.date_created;");
+    		s = plugin.conn.prepareStatement ("SELECT score, DATE_FORMAT(quiz_newmod.date_created,'%m/%d/%Y') as quizdate FROM quiz_newmod LEFT JOIN users ON users.id = quiz_newmod.user_id WHERE users.username = ? ORDER BY quiz_newmod.date_created;");
     		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
@@ -442,7 +527,7 @@ public class DbDAOMySQL extends DbDAO {
     		
     		rs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
             
             return scores;
             
@@ -461,9 +546,11 @@ public class DbDAOMySQL extends DbDAO {
 	 */
 	public HashMap<Integer,String> getPayerPlaytimeHistory( String username ){
 		try {
-            DbConnection conn = getConnection();
+            
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			
             PreparedStatement s;
-    		s = conn.prepareStatement ("SELECT DATE_FORMAT(joins.player_join,'%Y-%m-%d') as playdate, SUM(playtime) as playtime FROM joins WHERE username = ? GROUP BY DATE_FORMAT(joins.player_join,'%Y-%m-%d') ORDER BY joins.player_join DESC LIMIT 7;");
+    		s = plugin.conn.prepareStatement ("SELECT DATE_FORMAT(joins.player_join,'%Y-%m-%d') as playdate, SUM(playtime) as playtime FROM joins WHERE username = ? GROUP BY DATE_FORMAT(joins.player_join,'%Y-%m-%d') ORDER BY joins.player_join DESC LIMIT 7;");
     		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
@@ -475,7 +562,7 @@ public class DbDAOMySQL extends DbDAO {
     		
     		rs.close();
     		s.close();
-            conn.close();
+            plugin.conn.close();
             
             return scores;
             
@@ -496,6 +583,64 @@ public class DbDAOMySQL extends DbDAO {
     	return (float) (Math.round( val *100.0) / 100.0);
     }
 	
+    
+    
+    /**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public void fileWarning( String username, String reason, String filer ){
+		try {
+			
+			// Save join date
+	        java.util.Date date= new java.util.Date();
+	        String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
+			
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+            String str = String.format("INSERT INTO warnings (username,reason,date_created,moderator) VALUES ('%s','%s','%s','%s')", username, reason, ts, filer );
+	        PreparedStatement s = plugin.conn.prepareStatement(str);
+	        s.executeUpdate();
+    		s.close();
+            plugin.conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public List<Warnings> getPlayerWarnings( String username ){
+		ArrayList<Warnings> warnings = new ArrayList<Warnings>();
+		try {
+            
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			
+            PreparedStatement s;
+    		s = plugin.conn.prepareStatement ("SELECT DATE_FORMAT(warnings.date_created,'%m/%d/%y') as warndate, reason, username, moderator FROM warnings WHERE username = ?");
+    		s.setString(1, username);
+    		s.executeQuery();
+    		ResultSet rs = s.getResultSet();
+
+    		while(rs.next()){
+    			warnings.add( new Warnings(rs.getString("warndate"), rs.getString("username"), rs.getString("reason"), rs.getString("moderator")) );
+			}
+    		
+    		rs.close();
+    		s.close();
+            plugin.conn.close();
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+		return warnings;
+	}
     
     
 //  /**

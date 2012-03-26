@@ -62,7 +62,13 @@ package me.botsko.dhmcstats;
  * - Improved/consistent messaging styles
  * - /rank now knows how to reply if you check your own rank
  * - Older, invalid join dates are removed automatically. (May likely not need this on each boot)
- * 
+ * Version 0.2.1
+ * - Adding scheduled task to catch players who quit without the quit event firing properly
+ * Version 0.2.2
+ * - Adding very basic warnings system.
+ * Version 0.2.3
+ * - Fixed using /warn and /warnings from console
+ * - Added alert for mods when someone joins with three or more warnings
  * 
  * IDEAS:
  * 
@@ -74,10 +80,15 @@ package me.botsko.dhmcstats;
  */
 
 
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.logging.Logger;
+
+import me.botsko.dhmcstats.db.DbDAOMySQL;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -88,24 +99,61 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 public class Dhmcstats extends JavaPlugin {
 	
 	Logger log = Logger.getLogger("Minecraft");
-	private me.botsko.dhmcstats.db.DbDAO dao;
-	java.sql.Connection conn;
+	private DbDAOMySQL dao;
+	public java.sql.Connection conn;
 	PermissionManager permissions;
     
     
     /**
      * Connects to the MySQL database
      */
-	protected void dbc(){
+//	protected void dbc(){
+//		
+//		String mysql_user = this.getConfig().getString("mysql.username");
+//		String mysql_pass = this.getConfig().getString("mysql.password");
+//		String mysql_hostname = this.getConfig().getString("mysql.hostname");
+//		String mysql_database = this.getConfig().getString("mysql.database");
+//		String mysql_port = this.getConfig().getString("mysql.port");
+//		
+//		this.dao = new me.botsko.dhmcstats.db.DbDAOMySQL(mysql_hostname+":"+mysql_port, mysql_database, mysql_user, mysql_pass);
+//
+//    }
+	
+	
+	/**
+     * Connects to the MySQL database
+     */
+	public void dbc(){
 		
 		String mysql_user = this.getConfig().getString("mysql.username");
 		String mysql_pass = this.getConfig().getString("mysql.password");
 		String mysql_hostname = this.getConfig().getString("mysql.hostname");
 		String mysql_database = this.getConfig().getString("mysql.database");
 		String mysql_port = this.getConfig().getString("mysql.port");
-		
-		this.dao = new me.botsko.dhmcstats.db.DbDAOMySQL(mysql_hostname+":"+mysql_port, mysql_database, mysql_user, mysql_pass);
-
+    	
+        java.util.Properties conProperties = new java.util.Properties();
+        conProperties.put("user", mysql_user );
+        conProperties.put("password", mysql_pass );
+        conProperties.put("autoReconnect", "true");
+        conProperties.put("maxReconnects", "3");
+        String uri = "jdbc:mysql://"+mysql_hostname+":"+mysql_port+"/"+mysql_database;
+        
+        try {
+        	
+//        	this.log("Trying to re-open mysql connection.");
+        	
+        	conn = DriverManager.getConnection(uri, conProperties);
+        	
+        	if (conn == null || conn.isClosed() || !conn.isValid(1)){
+        		this.log("Mysql connection failed to open");
+        	}
+        	
+//        	this.log( "JDBC Version: "+conn.getMetaData().getDriverMajorVersion() + "." + conn.getMetaData().getDriverMinorVersion() );
+        	
+        	this.dao = new DbDAOMySQL(this);
+        } catch (SQLException e) {
+        	e.printStackTrace();
+        }
     }
 	
 	
@@ -113,7 +161,7 @@ public class Dhmcstats extends JavaPlugin {
 	 * Get the Data Access Object for the plugin
 	 * @return the DAO of the plugin
 	 */
-	public me.botsko.dhmcstats.db.DbDAO getDbDAO(){
+	public DbDAOMySQL getDbDAO(){
 		return dao;
 	}
 	
@@ -157,7 +205,7 @@ public class Dhmcstats extends JavaPlugin {
         // Force a timestamp for any null player_quits, which should only
 		// happen if the server crashed and the player_quit even never fired. Since
 		// we auto-reboot it's fairly safe to assume to the quit time isn't very far off.
-		getDbDAO().removeInvalidJoins();
+		//getDbDAO().removeInvalidJoins();
 		getDbDAO().forceDateForNullQuits();
 		getDbDAO().forcePlaytimeForNullQuits();
 		
@@ -174,6 +222,11 @@ public class Dhmcstats extends JavaPlugin {
 		getCommand("seen").setExecutor( (CommandExecutor) new SeenCommandExecutor(this) );
 		getCommand("ison").setExecutor( (CommandExecutor) new IsonCommandExecutor(this) );
 		getCommand("scores").setExecutor( (CommandExecutor) new ScoresCommandExecutor(this) );
+		getCommand("warn").setExecutor( (CommandExecutor) new WarnCommandExecutor(this) );
+		getCommand("warnings").setExecutor( (CommandExecutor) new WarningsCommandExecutor(this) );
+		
+		// Init scheduled
+		catchUncaughtDisconnects();
 		
 		// Load PEX
 		PluginManager pm = this.getServer().getPluginManager();
@@ -183,6 +236,31 @@ public class Dhmcstats extends JavaPlugin {
 		} else {
 			this.log("PermissionsEx plugin was not found.");
 	    }
+	}
+	
+	
+	/**
+	 * If a user disconnects in an unknown way that is never caught by onPlayerQuit,
+	 * this will force close all records except for players currently online.
+	 */
+	public void catchUncaughtDisconnects(){
+		getServer().getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
+
+		    public void run() {
+		        
+		    	String on_users = "";
+				for(Player pl: getServer().getOnlinePlayers()) {
+					on_users += "'"+pl.getName()+"',";
+				}
+				if(!on_users.isEmpty()){
+					on_users = on_users.substring(0, on_users.length()-1);
+				}
+				getDbDAO().forceDateForOfflinePlayers( on_users );
+				getDbDAO().forcePlaytimeForOfflinePlayers( on_users );
+				log("Catching uncaught disconnects.");
+		    	
+		    }
+		}, 6000L, 6000L);
 	}
  
 	

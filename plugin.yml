@@ -1,6 +1,6 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.2
+version: 0.2.3
 softdepend: [PermissionsEx]
 commands:
    played:
@@ -30,3 +30,9 @@ commands:
    scores:
       description: Checks the newmod scores of a users
       usage: /scores [player]
+   warn:
+      description: File an official warning against a player
+      usage: /warn [player] [reason]
+   warnings:
+      description: See warnings for a player
+      usage: /warnings [player]
