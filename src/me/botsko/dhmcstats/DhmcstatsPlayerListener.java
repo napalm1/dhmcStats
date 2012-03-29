@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import me.botsko.commands.RankCommandExecutor;
 import me.botsko.dhmcstats.db.Warnings;
 
 import org.bukkit.ChatColor;

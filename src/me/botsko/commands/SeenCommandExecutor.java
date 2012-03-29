@@ -1,8 +1,10 @@
-package me.botsko.dhmcstats;
+package me.botsko.commands;
 
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
+
+import me.botsko.dhmcstats.Dhmcstats;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

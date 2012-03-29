@@ -1,22 +1,3 @@
-/*
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program. If not, see <http://www.gnu.org/licenses/>.
-*
-* Packaged pooling code borrowed from Jobs Plugin for Bukkit
-* Copyright (C) 2011 Zak Ford <zak.j.ford@gmail.com>
-*/
-
 package me.botsko.dhmcstats.db;
 
 import java.sql.PreparedStatement;
@@ -47,11 +28,7 @@ public class DbDAOMySQL {
     	this.plugin = plugin;
     }
     
-    
-    
-    
-    
-    
+
     /**
      * Create tables if they do not exist
      */
@@ -598,8 +575,11 @@ public class DbDAOMySQL {
 	        String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
 			
 			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
-            String str = String.format("INSERT INTO warnings (username,reason,date_created,moderator) VALUES ('%s','%s','%s','%s')", username, reason, ts, filer );
-	        PreparedStatement s = plugin.conn.prepareStatement(str);
+	        PreparedStatement s = plugin.conn.prepareStatement("INSERT INTO warnings (username,reason,date_created,moderator) VALUES (?,?,?,?)");
+	        s.setString(1, username);
+	        s.setString(2, reason);
+	        s.setString(3, ts);
+	        s.setString(4, filer);
 	        s.executeUpdate();
     		s.close();
             plugin.conn.close();
@@ -622,13 +602,13 @@ public class DbDAOMySQL {
 			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
 			
             PreparedStatement s;
-    		s = plugin.conn.prepareStatement ("SELECT DATE_FORMAT(warnings.date_created,'%m/%d/%y') as warndate, reason, username, moderator FROM warnings WHERE username = ?");
+    		s = plugin.conn.prepareStatement ("SELECT id, DATE_FORMAT(warnings.date_created,'%m/%d/%y') as warndate, reason, username, moderator FROM warnings WHERE username = ? AND deleted = 0");
     		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
 
     		while(rs.next()){
-    			warnings.add( new Warnings(rs.getString("warndate"), rs.getString("username"), rs.getString("reason"), rs.getString("moderator")) );
+    			warnings.add( new Warnings(rs.getInt("id"), rs.getString("warndate"), rs.getString("username"), rs.getString("reason"), rs.getString("moderator")) );
 			}
     		
     		rs.close();
@@ -640,6 +620,26 @@ public class DbDAOMySQL {
             Dhmcstats.disablePlugin();
         }
 		return warnings;
+	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public void deleteWarning( int id ){
+		try {
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+	        PreparedStatement s = plugin.conn.prepareStatement("UPDATE warnings SET deleted = 1 WHERE id = ?");
+	        s.setInt(1, id);
+	        s.executeUpdate();
+    		s.close();
+            plugin.conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
 	}
     
     

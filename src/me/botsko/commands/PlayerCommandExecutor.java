@@ -1,6 +1,8 @@
-package me.botsko.dhmcstats;
+package me.botsko.commands;
 
 import java.sql.SQLException;
+
+import me.botsko.dhmcstats.Dhmcstats;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;

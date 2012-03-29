@@ -1,8 +1,9 @@
-package me.botsko.dhmcstats;
+package me.botsko.commands;
 
 import java.sql.SQLException;
 import java.util.List;
 
+import me.botsko.dhmcstats.Dhmcstats;
 import me.botsko.dhmcstats.db.Warnings;
 
 import org.bukkit.ChatColor;
@@ -87,7 +88,7 @@ public class WarningsCommandExecutor implements CommandExecutor  {
 		List<Warnings> warnings = plugin.getDbDAO().getPlayerWarnings(username);
 		if(!warnings.isEmpty()){
 			for(Warnings warn : warnings){
-				sender.sendMessage( plugin.playerMsg( warn.datewarned + ": " + ChatColor.RED + warn.reason ) );
+				sender.sendMessage( plugin.playerMsg( "["+ warn.id + "] " + warn.datewarned + ": " + ChatColor.RED + warn.reason ) );
 			}
 		} else {
 			sender.sendMessage( plugin.playerError("No warnings filed.") );

@@ -9,81 +9,23 @@ package me.botsko.dhmcstats;
  * Logs player join and quit so that we may track their daily activity and better
  * know how many active players we have over time.
  * 
- * Version 0.1
- * - Player join/quit listeners logging the timestamps
- * Version 0.1.1
- * - Added playtime calculations on quit event
- * - Added core playtime reading function
- * - Added forum registration check to alert user on join
- * - Added total/today/joined player stats command
- * Version 0.1.2
- * - Added forced playtime calcs for crashed join records
- * Version 0.1.3a
- * - Fixing numerous playtime bugs
- * - Added code that will import the Playtime plugin hashmap data
- * - Added "seen" command for first/last seen data
- * - Adding basic promotion qualification system
- * Version 0.1.3
- * - Removed temporary code
- * - Adding IP tracking
- * - Adding player count tracking, player count messaging on login
- * Version 0.1.4
- * - Added /ison [player] command
- * - Added partial name matching to most options
- * Version 0.1.5
- * - Playtime for current online session now added to totalplaytime checks
- * Version 0.1.5.1
- * - Database result/statement closing
- * - Minor bugfix in playerstats
- * - Trying to hide legendary/ask viv promo notifications
- * Version 0.1.5.2
- * - Minor sql statement close missed
- * - Disabled join data, since we don't actually log first-joins yet
- * Version 0.1.5.3
- * - Adding auto-reconnect settings to database connection
- * Version 0.1.6
- * - "Not awaiting" promo messages now hidden from joins
- * - Adding rankall command
- * Version 0.1.6.1
- * - Removing inventory save code, since Duties plugin does it better
- * - /rankall ignores people not awaiting, so the list won't explode chat
- * - Adding basic info on how long until next rank
- * - Attempting to fix promo announcements not sending to lead mods
- * Version 0.1.7
- * - Fixing commands so they can be run from the console.
- * - Adding newmod score checking
- * - Adding more connection close/open commands, better connection management
- * Version 0.1.8
- * - Fixing playtime remaining messages to avoid player confusion
- * Version 0.1.8.1
- * - Updated to the new bukkit events
- * Version 0.2
- * - Massive refactor
- * - Improved/consistent messaging styles
- * - /rank now knows how to reply if you check your own rank
- * - Older, invalid join dates are removed automatically. (May likely not need this on each boot)
- * Version 0.2.1
- * - Adding scheduled task to catch players who quit without the quit event firing properly
- * Version 0.2.2
- * - Adding very basic warnings system.
- * Version 0.2.3
- * - Fixed using /warn and /warnings from console
- * - Added alert for mods when someone joins with three or more warnings
- * 
- * IDEAS:
- * 
- * - Money history for week
- * - mcmmo stats
- * - move splitToComponentTimes to lib, it's now shared
- * - take out invalid join date tool?
- * 
  */
-
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Logger;
 
+import me.botsko.commands.IsonCommandExecutor;
+import me.botsko.commands.PlayedCommandExecutor;
+import me.botsko.commands.PlayerCommandExecutor;
+import me.botsko.commands.PlayerstatsCommandExecutor;
+import me.botsko.commands.PlayhistoryCommandExecutor;
+import me.botsko.commands.RankCommandExecutor;
+import me.botsko.commands.RankallCommandExecutor;
+import me.botsko.commands.ScoresCommandExecutor;
+import me.botsko.commands.SeenCommandExecutor;
+import me.botsko.commands.WarnCommandExecutor;
+import me.botsko.commands.WarningsCommandExecutor;
 import me.botsko.dhmcstats.db.DbDAOMySQL;
 
 import org.bukkit.ChatColor;
@@ -103,22 +45,6 @@ public class Dhmcstats extends JavaPlugin {
 	public java.sql.Connection conn;
 	PermissionManager permissions;
     
-    
-    /**
-     * Connects to the MySQL database
-     */
-//	protected void dbc(){
-//		
-//		String mysql_user = this.getConfig().getString("mysql.username");
-//		String mysql_pass = this.getConfig().getString("mysql.password");
-//		String mysql_hostname = this.getConfig().getString("mysql.hostname");
-//		String mysql_database = this.getConfig().getString("mysql.database");
-//		String mysql_port = this.getConfig().getString("mysql.port");
-//		
-//		this.dao = new me.botsko.dhmcstats.db.DbDAOMySQL(mysql_hostname+":"+mysql_port, mysql_database, mysql_user, mysql_pass);
-//
-//    }
-	
 	
 	/**
      * Connects to the MySQL database
@@ -139,17 +65,10 @@ public class Dhmcstats extends JavaPlugin {
         String uri = "jdbc:mysql://"+mysql_hostname+":"+mysql_port+"/"+mysql_database;
         
         try {
-        	
-//        	this.log("Trying to re-open mysql connection.");
-        	
         	conn = DriverManager.getConnection(uri, conProperties);
-        	
         	if (conn == null || conn.isClosed() || !conn.isValid(1)){
         		this.log("Mysql connection failed to open");
         	}
-        	
-//        	this.log( "JDBC Version: "+conn.getMetaData().getDriverMajorVersion() + "." + conn.getMetaData().getDriverMinorVersion() );
-        	
         	this.dao = new DbDAOMySQL(this);
         } catch (SQLException e) {
         	e.printStackTrace();

@@ -1,4 +1,6 @@
-package me.botsko.dhmcstats;
+package me.botsko.commands;
+
+import me.botsko.dhmcstats.Dhmcstats;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -42,22 +44,32 @@ public class WarnCommandExecutor implements CommandExecutor  {
 		
 		// /warn [player] [msg]
 		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.warn")) ){
-			if(args.length >= 2){
+			if(args[0].equalsIgnoreCase("delete")){
+				if(args.length == 2){
 				
-				String reason = "";
-				for (int i = 1; i < args.length; i = i + 1){
-					reason += args[i]+" ";
+					// delete the warning
+					plugin.getDbDAO().deleteWarning( new Integer(args[1]) );
+					sender.sendMessage( plugin.playerMsg("Warning deleted successfully."));
+					
 				}
-				
-				String warned_by = "console";
-				if(sender instanceof Player){
-					warned_by = player.getName();
+			} else {
+				if(args.length >= 2){
+					
+					String reason = "";
+					for (int i = 1; i < args.length; i = i + 1){
+						reason += args[i]+" ";
+					}
+					
+					String warned_by = "console";
+					if(sender instanceof Player){
+						warned_by = player.getName();
+					}
+					
+					sender.sendMessage( plugin.playerMsg("Warning file successfully."));
+					
+					fileWarning(args[0], reason, warned_by);
+					return true;
 				}
-				
-				sender.sendMessage( plugin.playerMsg("Warning file successfully."));
-				
-				fileWarning(args[0], reason, warned_by);
-				return true;
 			}
 		}
 		return false; 
