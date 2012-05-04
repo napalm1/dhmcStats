@@ -11,6 +11,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import org.bukkit.ChatColor;
+
 import me.botsko.dhmcstats.Dhmcstats;
 
 public class DbDAOMySQL {
@@ -620,6 +622,51 @@ public class DbDAOMySQL {
             Dhmcstats.disablePlugin();
         }
 		return warnings;
+	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public List<String> getActiveAnnouncements( ){
+		ArrayList<String> announces = new ArrayList<String>();
+		try {
+            
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			
+            PreparedStatement s;
+    		s = plugin.conn.prepareStatement ("SELECT announcement FROM announcements WHERE is_active = 1");
+    		s.executeQuery();
+    		ResultSet rs = s.getResultSet();
+
+    		while(rs.next()){
+    			String msg = ChatColor.GOLD + "[psa]: " + ChatColor.RED + rs.getString("announcement");
+    			announces.add(msg);
+			}
+    		rs.close();
+    		
+    		// pull forum announcements
+    		s = plugin.conn.prepareStatement ("SELECT * FROM posts WHERE category_id = 9 AND announcement = 1");
+    		s.executeQuery();
+    		ResultSet rs1 = s.getResultSet();
+
+    		while(rs1.next()){
+//    			String msg = "On Forums: " + rs1.getString("title") + " (http://dhmc.us/forum/post/" + rs1.getString("slug")+"/"+rs1.getString("id")+")";
+    			String msg = ChatColor.GOLD + "[forums]: " + ChatColor.RED + rs1.getString("title") + " (http://dhmc.us/r/"+rs1.getString("id")+")";
+    			announces.add(msg);
+			}
+    		rs1.close();
+    		
+    		s.close();
+            plugin.conn.close();
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+		return announces;
 	}
 	
 	

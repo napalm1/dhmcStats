@@ -62,3 +62,7 @@ Version 0.2.4
 - Added ability to delete warnings with /warn delete [id]
 - It's only a soft-delete though.
 - Fixed an sql injection problem.
+Version 0.2.5
+- Added support for eternal
+- Added new psa system. Pulls from both announcements table, and forum announcements
+- Added a basic macro system

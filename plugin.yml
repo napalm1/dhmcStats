@@ -1,6 +1,6 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.2.4
+version: 0.2.5
 softdepend: [PermissionsEx]
 commands:
    played:
@@ -36,3 +36,6 @@ commands:
    warnings:
       description: See warnings for a player
       usage: /warnings [player]
+   z:
+      description: Macro for text
+      usage: /z [choice]

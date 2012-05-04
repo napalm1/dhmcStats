@@ -13,9 +13,11 @@ package me.botsko.dhmcstats;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.logging.Logger;
 
 import me.botsko.commands.IsonCommandExecutor;
+import me.botsko.commands.MacroCommandExecutor;
 import me.botsko.commands.PlayedCommandExecutor;
 import me.botsko.commands.PlayerCommandExecutor;
 import me.botsko.commands.PlayerstatsCommandExecutor;
@@ -44,6 +46,7 @@ public class Dhmcstats extends JavaPlugin {
 	private DbDAOMySQL dao;
 	public java.sql.Connection conn;
 	PermissionManager permissions;
+	int last_announcement = 0;
     
 	
 	/**
@@ -143,9 +146,11 @@ public class Dhmcstats extends JavaPlugin {
 		getCommand("scores").setExecutor( (CommandExecutor) new ScoresCommandExecutor(this) );
 		getCommand("warn").setExecutor( (CommandExecutor) new WarnCommandExecutor(this) );
 		getCommand("warnings").setExecutor( (CommandExecutor) new WarningsCommandExecutor(this) );
+		getCommand("z").setExecutor( (CommandExecutor) new MacroCommandExecutor(this) );
 		
 		// Init scheduled
 		catchUncaughtDisconnects();
+		runAnnouncements();
 		
 		// Load PEX
 		PluginManager pm = this.getServer().getPluginManager();
@@ -178,6 +183,36 @@ public class Dhmcstats extends JavaPlugin {
 				getDbDAO().forcePlaytimeForOfflinePlayers( on_users );
 				log("Catching uncaught disconnects.");
 		    	
+		    }
+		}, 6000L, 6000L);
+	}
+	
+	
+	/**
+	 * If a user disconnects in an unknown way that is never caught by onPlayerQuit,
+	 * this will force close all records except for players currently online.
+	 */
+	public void runAnnouncements(){
+		getServer().getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
+
+		    public void run() {
+		    	
+		    	// Pull all items matching this name
+				List<String> announces = getDbDAO().getActiveAnnouncements();
+				if(!announces.isEmpty()){
+					
+					if(last_announcement >= announces.size()){
+						last_announcement = 0;
+					}
+					
+					String msg = announces.get(last_announcement);
+					for(Player pl : getServer().getOnlinePlayers()) {
+			    		pl.sendMessage( colorize(msg) );
+			    	}
+					log(colorize(msg));
+					
+					last_announcement++;
+				}
 		    }
 		}, 6000L, 6000L);
 	}
@@ -228,6 +263,17 @@ public class Dhmcstats extends JavaPlugin {
             return null;
         }
         return null;
+    }
+    
+    
+    /**
+	 * Converts colors place-holders.
+	 * @param text
+	 * @return
+	 */
+	public String colorize(String text){
+        String colorized = text.replaceAll("(&([a-f0-9A-F]))", "\u00A7$2");
+        return colorized;
     }
     
 
