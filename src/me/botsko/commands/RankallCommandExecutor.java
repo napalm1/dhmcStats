@@ -73,6 +73,7 @@ public class RankallCommandExecutor implements CommandExecutor  {
 	        if( 
 	        	!user.inGroup( "LegendaryPlayer" ) &&
 	        	!user.inGroup( "MythicalPlayer" ) &&
+	        	!user.inGroup( "EternalPlayer" ) &&
 	        	!user.inGroup( "NewModerator" ) &&
 	        	!user.inGroup( "Moderator") &&
 	        	!user.inGroup( "LeadModerator" ) &&

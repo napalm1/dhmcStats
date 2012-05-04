@@ -138,6 +138,9 @@ public class RankCommandExecutor implements CommandExecutor  {
 	    	else if(plugin.getPermissions().getUser(username).inGroup("MythicalPlayer")){
 	    		msg = string_intro + " Myth. A promotion is up to Vive";
 	    	}
+	    	else if(plugin.getPermissions().getUser(username).inGroup("EternalPlayer")){
+	    		msg = string_intro + " Eternal. A promotion is up to Vive";
+	    	}
 	    	else if(plugin.getPermissions().getUser(username).inGroup("LegendaryPlayer")){
 	    		msg = string_intro + " Legendary. Myth rank depends on skills, and other qualifications.";
 	    	}

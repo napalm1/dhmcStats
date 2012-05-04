@@ -50,6 +50,7 @@ public class WarnCommandExecutor implements CommandExecutor  {
 					// delete the warning
 					plugin.getDbDAO().deleteWarning( new Integer(args[1]) );
 					sender.sendMessage( plugin.playerMsg("Warning deleted successfully."));
+					return true;
 					
 				}
 			} else {
