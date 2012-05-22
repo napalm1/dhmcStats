@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Logger;
 
+import me.botsko.commands.DhmcCommandExecutor;
 import me.botsko.commands.IsonCommandExecutor;
 import me.botsko.commands.MacroCommandExecutor;
 import me.botsko.commands.PlayedCommandExecutor;
@@ -147,6 +148,7 @@ public class Dhmcstats extends JavaPlugin {
 		getCommand("warn").setExecutor( (CommandExecutor) new WarnCommandExecutor(this) );
 		getCommand("warnings").setExecutor( (CommandExecutor) new WarningsCommandExecutor(this) );
 		getCommand("z").setExecutor( (CommandExecutor) new MacroCommandExecutor(this) );
+		getCommand("dhmc").setExecutor( (CommandExecutor) new DhmcCommandExecutor(this) );
 		
 		// Init scheduled
 		catchUncaughtDisconnects();
@@ -184,7 +186,7 @@ public class Dhmcstats extends JavaPlugin {
 				log("Catching uncaught disconnects.");
 		    	
 		    }
-		}, 6000L, 6000L);
+		}, 1200L, 1200L);
 	}
 	
 	

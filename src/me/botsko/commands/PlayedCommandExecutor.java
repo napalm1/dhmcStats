@@ -70,7 +70,7 @@ public class PlayedCommandExecutor implements CommandExecutor  {
      * @throws SQLException 
      * @throws ParseException 
      */
-    private void checkPlayTime(String username, CommandSender sender) throws SQLException, ParseException {
+    public void checkPlayTime(String username, CommandSender sender) throws SQLException, ParseException {
     	
     	// Expand partials
     	String tmp = plugin.expandName(username);

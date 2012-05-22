@@ -66,3 +66,8 @@ Version 0.2.5
 - Added support for eternal
 - Added new psa system. Pulls from both announcements table, and forum announcements
 - Added a basic macro system
+Version 0.2.6
+- Minor macro changes
+- Adding sanity check to test for join data versus online
+- Changed disconnect checks to every minute
+- Adding /player alts [name]

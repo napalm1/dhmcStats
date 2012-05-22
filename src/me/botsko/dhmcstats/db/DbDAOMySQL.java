@@ -213,6 +213,37 @@ public class DbDAOMySQL {
 	}
 	
 	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public ArrayList<String> getPlayersJoinedNow(){
+		ArrayList<String> users = new ArrayList<String>();
+		try {
+            
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+            
+ 			PreparedStatement s;
+ 			s = plugin.conn.prepareStatement ("SELECT username FROM joins WHERE player_quit IS NULL");
+ 			s.executeQuery();
+ 			ResultSet rs = s.getResultSet();
+ 			
+ 			while( rs.next() ){
+ 				users.add(rs.getString(1));
+ 			}
+ 			rs.close();
+    		s.close();
+            plugin.conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+		return users;
+	}
+	
+	
 	/**
 	 * 
 	 * @param person
@@ -630,6 +661,55 @@ public class DbDAOMySQL {
 	 * @param person
 	 * @param account_name
 	 */
+	public List<Alts> getPlayerAlts( String username ){
+		ArrayList<Alts> accounts = new ArrayList<Alts>();
+		try {
+            
+			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			
+			// Pull the IPs first
+            PreparedStatement s;
+    		s = plugin.conn.prepareStatement ("SELECT DISTINCT(ip) as ip FROM joins WHERE username = ? AND ip != ''");
+    		s.setString(1, username);
+    		s.executeQuery();
+    		ResultSet rs = s.getResultSet();
+    		
+    		plugin.log("Finding alt for: " + username);
+
+    		while(rs.next()){
+    			
+    			plugin.log("Finding alt for IP: " + rs.getString("ip"));
+    			
+    			PreparedStatement s1;
+        		s1 = plugin.conn.prepareStatement ("SELECT DISTINCT(username) FROM joins WHERE ip = ? AND username != ?");
+        		s1.setString(1, rs.getString("ip"));
+        		s1.setString(2, username);
+        		s1.executeQuery();
+        		ResultSet rs1 = s1.getResultSet();
+	        	while(rs1.next()){
+	    			accounts.add( new Alts(rs.getString("ip"), rs1.getString("username")) );
+				}
+        		rs1.close();
+        		s1.close();
+    		}
+    		
+    		rs.close();
+    		s.close();
+            plugin.conn.close();
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+		return accounts;
+	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
 	public List<String> getActiveAnnouncements( ){
 		ArrayList<String> announces = new ArrayList<String>();
 		try {
@@ -648,13 +728,13 @@ public class DbDAOMySQL {
     		rs.close();
     		
     		// pull forum announcements
-    		s = plugin.conn.prepareStatement ("SELECT * FROM posts WHERE category_id = 9 AND announcement = 1");
+    		s = plugin.conn.prepareStatement ("SELECT * FROM posts WHERE category_id = 9 AND announcement = 1 AND closed = 0 AND hidden = 0");
     		s.executeQuery();
     		ResultSet rs1 = s.getResultSet();
 
     		while(rs1.next()){
 //    			String msg = "On Forums: " + rs1.getString("title") + " (http://dhmc.us/forum/post/" + rs1.getString("slug")+"/"+rs1.getString("id")+")";
-    			String msg = ChatColor.GOLD + "[forums]: " + ChatColor.RED + rs1.getString("title") + " (http://dhmc.us/r/"+rs1.getString("id")+")";
+    			String msg = ChatColor.GOLD + "[forums]: " + ChatColor.RED + rs1.getString("title") + " http://dhmc.us/r/"+rs1.getString("id")+"";
     			announces.add(msg);
 			}
     		rs1.close();

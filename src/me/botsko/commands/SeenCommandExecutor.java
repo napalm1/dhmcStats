@@ -71,7 +71,7 @@ public class SeenCommandExecutor implements CommandExecutor  {
      * @throws SQLException 
      * @throws ParseException 
      */
-    private void checkSeen(String username, CommandSender sender) throws SQLException, ParseException{
+    public void checkSeen(String username, CommandSender sender) throws SQLException, ParseException{
     	
     	// Expand partials
     	String tmp = plugin.expandName(username);

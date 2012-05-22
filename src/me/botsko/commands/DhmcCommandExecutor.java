@@ -1,5 +1,7 @@
 package me.botsko.commands;
 
+import java.util.ArrayList;
+
 import me.botsko.dhmcstats.Dhmcstats;
 
 import org.bukkit.ChatColor;
@@ -10,7 +12,7 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
-public class MacroCommandExecutor implements CommandExecutor  {
+public class DhmcCommandExecutor implements CommandExecutor  {
 	
 	private Dhmcstats plugin;
 	
@@ -19,7 +21,7 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	 * @param plugin
 	 * @return 
 	 */
-	public MacroCommandExecutor(Dhmcstats plugin) {
+	public DhmcCommandExecutor(Dhmcstats plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -43,9 +45,10 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		}
 		
 		// /warn [player] [msg]
-		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.macro")) ){
+		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.admin")) ){
 			if(args.length == 1){
-				getMacro(args[0]);
+				if(args[0].equalsIgnoreCase("sanity"))
+				testSanity(player);
 				return true;
 			}
 		}
@@ -59,28 +62,20 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	 * @param reason
 	 * @param reporter
 	 */
-	protected void getMacro(String choice){
+	protected void testSanity(Player player){
 		
-		if(choice.equalsIgnoreCase("promo")){
-			say("&dRank and Promotion Questions? Please read: http://dhmc.us/help/promo");
-		}
-		if(choice.equalsIgnoreCase("faq")){
-			say("&dMap Change Questions? Please read: http://dhmc.us/help/faq");
-		}
-		if(choice.equalsIgnoreCase("mods")){
-			say("&dVive isn't the only mod here. ;)");
-		}
-		if(choice.equalsIgnoreCase("ban")){
-			say("&dBan appeals go on the forums. Admins do not handle appeals here.");
-		}
-		if(choice.equalsIgnoreCase("myth")){
-			say("&dThink you qualify for myth? File a modreq stating your qualifications. Find them here: http://dhmc.us/help/promo/#mythical");
-		}
-		if(choice.equalsIgnoreCase("poi")){
-			say("&dSubmit POIs from our website. We review them all at once. Approved say 'POI' in gallery: http://www.flickr.com/photos/botskonet/");
-		}
-		if(choice.equalsIgnoreCase("crap")){
-			say("&dSorry but we're not falling for your crap.");
+		ArrayList<String> users = plugin.getDbDAO().getPlayersJoinedNow();
+		Player[] players = plugin.getServer().getOnlinePlayers();
+		
+		player.sendMessage( plugin.playerMsg("Checking sanity:") );
+		if(!users.isEmpty()){
+			for(String user : users){
+				for(Player pl : players){
+					if(!pl.getName().equalsIgnoreCase(user)){
+						player.sendMessage( plugin.playerError("User " + user + " has open join, but is not online.") );
+					}
+				}
+			}
 		}
 	}
 	
