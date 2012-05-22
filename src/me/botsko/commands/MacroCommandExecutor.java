@@ -44,8 +44,12 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		
 		// /warn [player] [msg]
 		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.macro")) ){
-			if(args.length == 1){
-				getMacro(args[0]);
+			String send_to_player = "";
+			if(args.length >= 1){
+				if(args.length == 2){
+					send_to_player = args[1];
+				}
+				getMacro(args[0], send_to_player);
 				return true;
 			}
 		}
@@ -59,28 +63,28 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	 * @param reason
 	 * @param reporter
 	 */
-	protected void getMacro(String choice){
+	protected void getMacro(String choice, String player){
 		
 		if(choice.equalsIgnoreCase("promo")){
-			say("&dRank and Promotion Questions? Please read: http://dhmc.us/help/promo");
+			say(player, "&dRank and Promotion Questions? Please read: http://dhmc.us/help/promo");
 		}
 		if(choice.equalsIgnoreCase("faq")){
-			say("&dMap Change Questions? Please read: http://dhmc.us/help/faq");
+			say(player, "&dMap Change Questions? Please read: http://dhmc.us/help/faq");
 		}
 		if(choice.equalsIgnoreCase("mods")){
-			say("&dVive isn't the only mod here. ;)");
+			say(player, "&dVive isn't the only mod here. ;)");
 		}
 		if(choice.equalsIgnoreCase("ban")){
-			say("&dBan appeals go on the forums. Admins do not handle appeals here.");
+			say(player, "&dBan appeals go on the forums. Admins do not handle appeals here.");
 		}
 		if(choice.equalsIgnoreCase("myth")){
-			say("&dThink you qualify for myth? File a modreq stating your qualifications. Find them here: http://dhmc.us/help/promo/#mythical");
+			say(player, "&dThink you qualify for myth? File a modreq stating your qualifications. Find them here: http://dhmc.us/help/promo/#mythical");
 		}
 		if(choice.equalsIgnoreCase("poi")){
-			say("&dSubmit POIs from our website. We review them all at once. Approved say 'POI' in gallery: http://www.flickr.com/photos/botskonet/");
+			say(player, "&dSubmit POIs from our website. We review them all at once. Approved say 'POI' in gallery: http://www.flickr.com/photos/botskonet/");
 		}
 		if(choice.equalsIgnoreCase("crap")){
-			say("&dSorry but we're not falling for your crap.");
+			say(player, "&dSorry but we're not falling for your crap.");
 		}
 	}
 	
@@ -89,10 +93,12 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	 * 
 	 * @param msg
 	 */
-	protected void say(String msg){
+	protected void say(String player, String msg){
 		
 		for(Player pl : plugin.getServer().getOnlinePlayers()) {
-    		pl.sendMessage( ChatColor.AQUA + "[dhmcRemindsYou]: " + plugin.colorize(msg) );
+			if( player.equalsIgnoreCase("") || player.equalsIgnoreCase(pl.getName()) ){
+				pl.sendMessage( ChatColor.AQUA + "[dhmcRemindsYou]: " + plugin.colorize(msg) );
+			}
     	}
 	}
 }
