@@ -7,6 +7,7 @@ import java.util.List;
 import me.botsko.dhmcstats.Dhmcstats;
 import me.botsko.dhmcstats.db.Alts;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -114,6 +115,9 @@ public class PlayerCommandExecutor implements CommandExecutor  {
     	PlayedCommandExecutor played = new PlayedCommandExecutor(plugin);
     	played.checkPlayTime(username, sender);
     	
+    	Bukkit.dispatchCommand(sender, "lookup " + username);
+    	Bukkit.dispatchCommand(sender, "warnings " + username);
+    	
     	PermissionUser user = plugin.getPermissions().getUser( username );
     	
     	String delim = "";
@@ -140,6 +144,7 @@ public class PlayerCommandExecutor implements CommandExecutor  {
 		if(!alt_accts.isEmpty()){
 			for(Alts alt : alt_accts){
 				sender.sendMessage( plugin.playerMsg( "["+ alt.ip + "] " + ChatColor.GRAY + alt.username ));
+				Bukkit.dispatchCommand(sender, "lookup " + alt.username);
 			}
 		}
     	
