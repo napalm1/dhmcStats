@@ -669,19 +669,17 @@ public class DbDAOMySQL {
 			
 			// Pull the IPs first
             PreparedStatement s;
-    		s = plugin.conn.prepareStatement ("SELECT DISTINCT(ip) as ip FROM joins WHERE username = ? AND ip != ''");
+    		s = plugin.conn.prepareStatement ("SELECT ip FROM join_ips WHERE username = ?");
     		s.setString(1, username);
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
     		
-    		plugin.log("Finding alt for: " + username);
-
     		while(rs.next()){
     			
     			plugin.log("Finding alt for IP: " + rs.getString("ip"));
     			
     			PreparedStatement s1;
-        		s1 = plugin.conn.prepareStatement ("SELECT DISTINCT(username) FROM joins WHERE ip = ? AND username != ?");
+        		s1 = plugin.conn.prepareStatement ("SELECT username FROM join_ips WHERE ip = ? AND username != ?");
         		s1.setString(1, rs.getString("ip"));
         		s1.setString(2, username);
         		s1.executeQuery();
@@ -738,6 +736,18 @@ public class DbDAOMySQL {
     			announces.add(msg);
 			}
     		rs1.close();
+    		
+    		
+    		// pull recent blog posts announcements
+    		s = plugin.conn.prepareStatement ("SELECT * FROM blog_posts WHERE TO_DAYS(NOW()) - TO_DAYS(date_created) < 7");
+    		s.executeQuery();
+    		ResultSet rs2 = s.getResultSet();
+
+    		while(rs2.next()){
+    			String msg = ChatColor.GOLD + "[news]: " + ChatColor.RED + rs1.getString("title") + " http://dhmc.us/blog/";
+    			announces.add(msg);
+			}
+    		rs2.close();
     		
     		s.close();
             plugin.conn.close();
