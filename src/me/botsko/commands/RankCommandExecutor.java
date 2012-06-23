@@ -2,6 +2,7 @@ package me.botsko.commands;
 
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 
 import me.botsko.dhmcstats.Dhmcstats;
@@ -159,10 +160,23 @@ public class RankCommandExecutor implements CommandExecutor  {
 	    		}
 	    	}
 	    	else {
-	    		if(days >= 1 && hours >= 5){
+	    		
+	    		Calendar cal1 = Calendar.getInstance();
+	    		Calendar cal2 = Calendar.getInstance();
+	    		cal1.setTime(today);
+	    		cal2.setTime(joined);
+	    		boolean sameDay = cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+	    		                  cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
+	    		
+	    		if(!sameDay && hours >= 5){
 	    			msg = string_qual + " for: " + ChatColor.AQUA + " Trusted";
 	    		} else {
-	    			msg = timeRemaining("Trusted", 1, days, 5, hours, string_remain);
+	    			int remain_hrs = (5 - hours);
+	    			if(sameDay){
+	    				msg = "Trusted in " + remain_hrs + "hour of playtime, no sooner than tomorrow.";
+	    			} else {
+	    				msg = "Trusted in " + remain_hrs + "hour of playtime.";
+	    			}
 	    		}
 	    	}
     	} else {
