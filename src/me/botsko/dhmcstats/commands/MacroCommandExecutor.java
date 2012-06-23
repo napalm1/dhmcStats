@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import me.botsko.dhmcstats.Dhmcstats;
 
@@ -6,12 +6,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class MacroCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
 	
 	/**
@@ -25,9 +27,6 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	
 	
 	/**
-     * Handles all of the commands.
-     * 
-     * 
      * @param sender
      * @param command
      * @param label
@@ -37,16 +36,13 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) throws IllegalPluginAccessException {
 		
-		Player player = null;
 		if(sender instanceof Player){
-			player = (Player) sender;
-		}
-		
-		// /warn [player] [msg]
-		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.macro")) ){
-			if(args.length == 1){
-				getMacro(args[0]);
-				return true;
+			Player player = (Player) sender;
+			if(player.hasPermission("dhmcstats.macro")){
+				if(args.length == 1){
+					getMacro(args[0]);
+					return true;
+				}
 			}
 		}
 		return false; 
@@ -79,9 +75,6 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		if(choice.equalsIgnoreCase("poi")){
 			say("&dSubmit POIs from our website. We review them all at once. Approved say 'POI' in gallery: http://www.flickr.com/photos/botskonet/");
 		}
-		if(choice.equalsIgnoreCase("crap")){
-			say("&dSorry but we're not falling for your crap.");
-		}
 	}
 	
 	
@@ -90,9 +83,6 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	 * @param msg
 	 */
 	protected void say(String msg){
-		
-		for(Player pl : plugin.getServer().getOnlinePlayers()) {
-    		pl.sendMessage( ChatColor.AQUA + "[dhmcRemindsYou]: " + plugin.colorize(msg) );
-    	}
+		plugin.messageAllPlayers(ChatColor.AQUA + "[dhmcRemindsYou]: " + plugin.colorize(msg));
 	}
 }

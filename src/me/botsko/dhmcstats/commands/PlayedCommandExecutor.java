@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -15,7 +15,11 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class PlayedCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
+	
 	
 	/**
 	 * 
@@ -44,8 +48,7 @@ public class PlayedCommandExecutor implements CommandExecutor  {
     	if (sender instanceof Player) {
     		
     		Player player = (Player) sender;
-    		
-    		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.played")) ){
+    		if(player.hasPermission("dhmcstats.played")){
 	    		String user = (args.length == 1 ? args[0] : player.getName());
 				try {
 					checkPlayTime( user, sender );
@@ -57,9 +60,7 @@ public class PlayedCommandExecutor implements CommandExecutor  {
 				}
     		}
     	}
-
 		return false; 
-		
 	}
 	
 	

@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -16,7 +16,11 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class WarningsCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
+	
 	
 	/**
 	 * 
@@ -47,7 +51,7 @@ public class WarningsCommandExecutor implements CommandExecutor  {
 		}
 		
 		// /warnings (player)
-		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.warnings")) ){
+		if(sender instanceof ConsoleCommandSender || (player != null && player.hasPermission("dhmcstats.warnings")) ){
 			
 			// If no username found, assume they mean themselves
 			String user = "";

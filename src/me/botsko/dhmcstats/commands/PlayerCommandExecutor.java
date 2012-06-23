@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -21,7 +21,11 @@ import ru.tehkode.permissions.PermissionUser;
 
 public class PlayerCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
+	
 	
 	/**
 	 * 
@@ -51,40 +55,26 @@ public class PlayerCommandExecutor implements CommandExecutor  {
     		
     		Player player = (Player) sender;
     		
-    		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.player")) ){
+    		if(player.hasPermission("dhmcstats.player")){
     			
-    			if (args.length == 2){
+    			// Player alts
+    			if (args.length == 2 && args[0].equalsIgnoreCase("alts")){
     				
-    				if(args[0].equalsIgnoreCase("alts")){
-    					playerAlts( args[1], sender);
-    					return true;
-    				}
-    				
+					playerAlts( args[1], sender);
+					return true;
+					
     			} else {
-    			
-	    			if (args.length == 1){
-						try {
-							playerStats( args[0], sender );
-							return true;
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (ParseException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-	    			} else {
-						try {
-							playerStats( player.getName(), sender );
-							return true;
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (ParseException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-	    			}
+    				
+    				// Checking stats of player
+    				String user = (args.length == 1 ? args[0] : player.getName());
+					try {
+						playerStats( user, sender );
+						return true;
+					} catch (SQLException e) {
+						e.printStackTrace();
+					} catch (ParseException e) {
+						e.printStackTrace();
+					}
     			}
 			}
     	}
@@ -144,7 +134,7 @@ public class PlayerCommandExecutor implements CommandExecutor  {
 		if(!alt_accts.isEmpty()){
 			for(Alts alt : alt_accts){
 				sender.sendMessage( plugin.playerMsg( "["+ alt.ip + "] " + ChatColor.GRAY + alt.username ));
-				Bukkit.dispatchCommand(sender, "lookup " + alt.username);
+//				Bukkit.dispatchCommand(sender, "lookup " + alt.username);
 			}
 		}
     	

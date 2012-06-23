@@ -16,20 +16,21 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Logger;
 
-import me.botsko.commands.DhmcCommandExecutor;
-import me.botsko.commands.IsonCommandExecutor;
-import me.botsko.commands.MacroCommandExecutor;
-import me.botsko.commands.PlayedCommandExecutor;
-import me.botsko.commands.PlayerCommandExecutor;
-import me.botsko.commands.PlayerstatsCommandExecutor;
-import me.botsko.commands.PlayhistoryCommandExecutor;
-import me.botsko.commands.RankCommandExecutor;
-import me.botsko.commands.RankallCommandExecutor;
-import me.botsko.commands.ScoresCommandExecutor;
-import me.botsko.commands.SeenCommandExecutor;
-import me.botsko.commands.WarnCommandExecutor;
-import me.botsko.commands.WarningsCommandExecutor;
+import me.botsko.dhmcstats.commands.DhmcCommandExecutor;
+import me.botsko.dhmcstats.commands.IsonCommandExecutor;
+import me.botsko.dhmcstats.commands.MacroCommandExecutor;
+import me.botsko.dhmcstats.commands.PlayedCommandExecutor;
+import me.botsko.dhmcstats.commands.PlayerCommandExecutor;
+import me.botsko.dhmcstats.commands.PlayerstatsCommandExecutor;
+import me.botsko.dhmcstats.commands.PlayhistoryCommandExecutor;
+import me.botsko.dhmcstats.commands.RankCommandExecutor;
+import me.botsko.dhmcstats.commands.RankallCommandExecutor;
+import me.botsko.dhmcstats.commands.ScoresCommandExecutor;
+import me.botsko.dhmcstats.commands.SeenCommandExecutor;
+import me.botsko.dhmcstats.commands.WarnCommandExecutor;
+import me.botsko.dhmcstats.commands.WarningsCommandExecutor;
 import me.botsko.dhmcstats.db.DbDAOMySQL;
+import me.botsko.dhmcstats.listeners.DhmcstatsPlayerListener;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
@@ -44,9 +45,8 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 public class Dhmcstats extends JavaPlugin {
 	
 	Logger log = Logger.getLogger("Minecraft");
-	private DbDAOMySQL dao;
 	public java.sql.Connection conn;
-	PermissionManager permissions;
+	protected PermissionManager permissions;
 	int last_announcement = 0;
     
 	
@@ -73,20 +73,10 @@ public class Dhmcstats extends JavaPlugin {
         	if (conn == null || conn.isClosed() || !conn.isValid(1)){
         		this.log("Mysql connection failed to open");
         	}
-        	this.dao = new DbDAOMySQL(this);
         } catch (SQLException e) {
         	e.printStackTrace();
         }
     }
-	
-	
-	/**
-	 * Get the Data Access Object for the plugin
-	 * @return the DAO of the plugin
-	 */
-	public DbDAOMySQL getDbDAO(){
-		return dao;
-	}
 	
 	
 	/**
@@ -128,14 +118,17 @@ public class Dhmcstats extends JavaPlugin {
         // Force a timestamp for any null player_quits, which should only
 		// happen if the server crashed and the player_quit even never fired. Since
 		// we auto-reboot it's fairly safe to assume to the quit time isn't very far off.
-		//getDbDAO().removeInvalidJoins();
 		getDbDAO().forceDateForNullQuits();
 		getDbDAO().forcePlaytimeForNullQuits();
 		
-		// Init event listeners
+		/**
+		 * Event listeners
+		 */
 		getServer().getPluginManager().registerEvents(new DhmcstatsPlayerListener(this), this);
 		
-		// Init command listeners
+		/**
+		 * Commands
+		 */
 		getCommand("played").setExecutor( (CommandExecutor) new PlayedCommandExecutor(this) );
 		getCommand("playhist").setExecutor( (CommandExecutor) new PlayhistoryCommandExecutor(this) );
 		getCommand("player").setExecutor( (CommandExecutor) new PlayerCommandExecutor(this) );
@@ -148,13 +141,16 @@ public class Dhmcstats extends JavaPlugin {
 		getCommand("warn").setExecutor( (CommandExecutor) new WarnCommandExecutor(this) );
 		getCommand("warnings").setExecutor( (CommandExecutor) new WarningsCommandExecutor(this) );
 		getCommand("z").setExecutor( (CommandExecutor) new MacroCommandExecutor(this) );
-		getCommand("dhmc").setExecutor( (CommandExecutor) new DhmcCommandExecutor(this) );
 		
-		// Init scheduled
+		/**
+		 * Scheduled events
+		 */
 		catchUncaughtDisconnects();
 		runAnnouncements();
 		
-		// Load PEX
+		/**
+		 * Load PermissionsEX
+		 */
 		PluginManager pm = this.getServer().getPluginManager();
 		if(pm.isPluginEnabled("PermissionsEx")){
 			permissions = PermissionsEx.getPermissionManager();
@@ -183,7 +179,7 @@ public class Dhmcstats extends JavaPlugin {
 				}
 				getDbDAO().forceDateForOfflinePlayers( on_users );
 				getDbDAO().forcePlaytimeForOfflinePlayers( on_users );
-				log("Catching uncaught disconnects.");
+//				log("Catching uncaught disconnects.");
 		    	
 		    }
 		}, 1200L, 1200L);
@@ -277,6 +273,17 @@ public class Dhmcstats extends JavaPlugin {
         String colorized = text.replaceAll("(&([a-f0-9A-F]))", "\u00A7$2");
         return colorized;
     }
+	
+	
+	/**
+	 * 
+	 * @param msg
+	 */
+	public void messageAllPlayers(String msg){
+		for(Player pl : getServer().getOnlinePlayers()) {
+    		pl.sendMessage( msg );
+    	}
+	}
     
 
     /**

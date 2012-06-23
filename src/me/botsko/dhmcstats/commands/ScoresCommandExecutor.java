@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -17,7 +17,11 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class ScoresCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
+	
 	
 	/**
 	 * 
@@ -41,14 +45,9 @@ public class ScoresCommandExecutor implements CommandExecutor  {
      */
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) throws IllegalPluginAccessException {
-		
-		// Is a player issue this command?
     	if (sender instanceof Player) {
-    		
     		Player player = (Player) sender;
-    		
-    		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.scores")) ){
-    			
+    		if(player.hasPermission("dhmcstats.scores")){
     			String user = (args.length == 1 ? args[0] : player.getName());
     			try {
     				checkScores( user, sender );
@@ -58,9 +57,7 @@ public class ScoresCommandExecutor implements CommandExecutor  {
 				}
 			}
     	}
-
 		return false; 
-		
 	}
 	
 	

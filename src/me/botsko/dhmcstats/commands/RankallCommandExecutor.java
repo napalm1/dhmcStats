@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -8,7 +8,6 @@ import me.botsko.dhmcstats.Dhmcstats;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
@@ -16,7 +15,11 @@ import ru.tehkode.permissions.PermissionUser;
 
 public class RankallCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
+	
 	
 	/**
 	 * 
@@ -40,20 +43,14 @@ public class RankallCommandExecutor implements CommandExecutor  {
      */
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) throws IllegalPluginAccessException {
-		
-		// Is a player issue this command?
     	if (sender instanceof Player) {
-    		
     		Player player = (Player) sender;
-    		
-    		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.rank")) ){
+    		if(player.hasPermission("dhmcstats.rank")){
 				rankAll( sender );
 				return true;
 			}
     	}
-
 		return false; 
-		
 	}
 
 	

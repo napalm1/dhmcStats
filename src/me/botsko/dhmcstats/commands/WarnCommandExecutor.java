@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import me.botsko.dhmcstats.Dhmcstats;
 
@@ -12,7 +12,11 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class WarnCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
+	
 	
 	/**
 	 * 
@@ -43,7 +47,7 @@ public class WarnCommandExecutor implements CommandExecutor  {
 		}
 		
 		// /warn [player] [msg]
-		if(sender instanceof ConsoleCommandSender || (player != null && plugin.getPermissions().has(player, "dhmcstats.warn")) ){
+		if(sender instanceof ConsoleCommandSender || (player != null && player.hasPermission("dhmcstats.warn")) ){
 			if(args[0].equalsIgnoreCase("delete")){
 				if(args.length == 2){
 				

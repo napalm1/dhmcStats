@@ -1,4 +1,4 @@
-package me.botsko.commands;
+package me.botsko.dhmcstats.commands;
 
 import me.botsko.dhmcstats.Dhmcstats;
 
@@ -9,6 +9,9 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class IsonCommandExecutor implements CommandExecutor  {
 	
+	/**
+	 * 
+	 */
 	private Dhmcstats plugin;
 	
 	/**
@@ -33,7 +36,6 @@ public class IsonCommandExecutor implements CommandExecutor  {
      */
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) throws IllegalPluginAccessException {
-		
 		if (args.length == 1){
 			 String ison = plugin.expandName(args[0]);
 			 if(ison != null){
