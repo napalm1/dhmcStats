@@ -16,7 +16,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Logger;
 
-import me.botsko.dhmcstats.commands.DhmcCommandExecutor;
+import me.botsko.dhmcstats.announcements.AnnouncementUtil;
 import me.botsko.dhmcstats.commands.IsonCommandExecutor;
 import me.botsko.dhmcstats.commands.MacroCommandExecutor;
 import me.botsko.dhmcstats.commands.PlayedCommandExecutor;
@@ -29,7 +29,7 @@ import me.botsko.dhmcstats.commands.ScoresCommandExecutor;
 import me.botsko.dhmcstats.commands.SeenCommandExecutor;
 import me.botsko.dhmcstats.commands.WarnCommandExecutor;
 import me.botsko.dhmcstats.commands.WarningsCommandExecutor;
-import me.botsko.dhmcstats.db.DbDAOMySQL;
+import me.botsko.dhmcstats.joins.JoinUtil;
 import me.botsko.dhmcstats.listeners.DhmcstatsPlayerListener;
 
 import org.bukkit.ChatColor;
@@ -46,8 +46,9 @@ public class Dhmcstats extends JavaPlugin {
 	
 	Logger log = Logger.getLogger("Minecraft");
 	public java.sql.Connection conn;
-	protected PermissionManager permissions;
+	public PermissionManager permissions;
 	int last_announcement = 0;
+	public Dhmcstats dhmc;
     
 	
 	/**
@@ -110,21 +111,22 @@ public class Dhmcstats extends JavaPlugin {
      */
 	public void onEnable(){
 		
+		dhmc = this;
+		
 		this.log("Initializing player listeners");
 		
 		handleConfig();
 		dbc();
 		
-        // Force a timestamp for any null player_quits, which should only
-		// happen if the server crashed and the player_quit even never fired. Since
-		// we auto-reboot it's fairly safe to assume to the quit time isn't very far off.
-		getDbDAO().forceDateForNullQuits();
-		getDbDAO().forcePlaytimeForNullQuits();
+		// Ensure the join data is clean
+		JoinUtil.startupDbChecks(this);
+		
 		
 		/**
 		 * Event listeners
 		 */
 		getServer().getPluginManager().registerEvents(new DhmcstatsPlayerListener(this), this);
+		
 		
 		/**
 		 * Commands
@@ -142,11 +144,13 @@ public class Dhmcstats extends JavaPlugin {
 		getCommand("warnings").setExecutor( (CommandExecutor) new WarningsCommandExecutor(this) );
 		getCommand("z").setExecutor( (CommandExecutor) new MacroCommandExecutor(this) );
 		
+		
 		/**
 		 * Scheduled events
 		 */
 		catchUncaughtDisconnects();
 		runAnnouncements();
+		
 		
 		/**
 		 * Load PermissionsEX
@@ -167,9 +171,7 @@ public class Dhmcstats extends JavaPlugin {
 	 */
 	public void catchUncaughtDisconnects(){
 		getServer().getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
-
 		    public void run() {
-		        
 		    	String on_users = "";
 				for(Player pl: getServer().getOnlinePlayers()) {
 					on_users += "'"+pl.getName()+"',";
@@ -177,10 +179,7 @@ public class Dhmcstats extends JavaPlugin {
 				if(!on_users.isEmpty()){
 					on_users = on_users.substring(0, on_users.length()-1);
 				}
-				getDbDAO().forceDateForOfflinePlayers( on_users );
-				getDbDAO().forcePlaytimeForOfflinePlayers( on_users );
-//				log("Catching uncaught disconnects.");
-		    	
+				JoinUtil.catchDisconnects( dhmc, on_users );
 		    }
 		}, 1200L, 1200L);
 	}
@@ -195,8 +194,10 @@ public class Dhmcstats extends JavaPlugin {
 
 		    public void run() {
 		    	
+		    	
+		    	
 		    	// Pull all items matching this name
-				List<String> announces = getDbDAO().getActiveAnnouncements();
+				List<String> announces = AnnouncementUtil.getActiveAnnouncements( dhmc );
 				if(!announces.isEmpty()){
 					
 					if(last_announcement >= announces.size()){
@@ -255,12 +256,12 @@ public class Dhmcstats extends JavaPlugin {
         if (m == 1)
             return Result;
         if (m > 1) {
-            return null;
+            return Name;
         }
         if (m < 1) {
-            return null;
+            return Name;
         }
-        return null;
+        return Name;
     }
     
     

@@ -3,12 +3,12 @@ package me.botsko.dhmcstats.commands;
 import java.sql.SQLException;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.stats.StatsUtil;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
@@ -66,8 +66,8 @@ public class PlayerstatsCommandExecutor implements CommandExecutor  {
     private void checkPlayerCounts(CommandSender sender) throws SQLException{
 
     	// Pull how many players joined in total
-		int total = plugin.getDbDAO().getPlayerJoinCount();
-		int playedtoday = plugin.getDbDAO().getPlayerJoinTodayCount();
+		int total = StatsUtil.getPlayerJoinCount( plugin );
+		int playedtoday = StatsUtil.getPlayerJoinTodayCount( plugin );
 
 		sender.sendMessage(ChatColor.GOLD  + "Players Online: " + plugin.getOnlineCount());
 		sender.sendMessage(ChatColor.GOLD  + "Total Players: " + total);

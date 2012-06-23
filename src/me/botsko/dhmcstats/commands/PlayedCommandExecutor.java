@@ -4,12 +4,13 @@ import java.sql.SQLException;
 import java.text.ParseException;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.playtime.Playtime;
+import me.botsko.dhmcstats.playtime.PlaytimeUtil;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
@@ -72,33 +73,10 @@ public class PlayedCommandExecutor implements CommandExecutor  {
      * @throws ParseException 
      */
     public void checkPlayTime(String username, CommandSender sender) throws SQLException, ParseException {
-    	
-    	// Expand partials
-    	String tmp = plugin.expandName(username);
-    	if(tmp != null){
-    		username = tmp;
-    	}
-    
-		int playtime = plugin.getDbDAO().getPlaytime(username);
-		int[] times = splitToComponentTimes(playtime);
-		sender.sendMessage(ChatColor.GOLD + username + " has played for " + times[0] + " hours, " + times[1] + " minutes, and " + times[2] + " seconds. Nice!");
+
+    	username = plugin.expandName(username);
+		Playtime playtime = PlaytimeUtil.getPlaytime( plugin, username );
+		sender.sendMessage(ChatColor.GOLD + username + " has played for " + playtime.getHours() + " hours, " + playtime.getMinutes() + " minutes, and " + playtime.getSeconds() + " seconds. Nice!");
 		
-    }
-    
-    
-    /**
-     * Convert seconds into hours/mins/secs
-     * 
-     * @param biggy
-     * @return
-     */
-    private static int[] splitToComponentTimes(int biggy){
-        int hours = (int) biggy / 3600;
-        int remainder = (int) biggy - hours * 3600;
-        int mins = remainder / 60;
-        remainder = remainder - mins * 60;
-        int secs = remainder;
-        int[] ints = {hours , mins , secs};
-        return ints;
     }
 }

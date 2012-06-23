@@ -1,6 +1,7 @@
 package me.botsko.dhmcstats.commands;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.warnings.WarningUtil;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -52,7 +53,7 @@ public class WarnCommandExecutor implements CommandExecutor  {
 				if(args.length == 2){
 				
 					// delete the warning
-					plugin.getDbDAO().deleteWarning( new Integer(args[1]) );
+					WarningUtil.deleteWarning( plugin, new Integer(args[1]) );
 					sender.sendMessage( plugin.playerMsg("Warning deleted successfully."));
 					return true;
 					
@@ -88,7 +89,8 @@ public class WarnCommandExecutor implements CommandExecutor  {
 	 * @param reporter
 	 */
 	protected void fileWarning(String username, String reason, String reporter){
-		plugin.getDbDAO().fileWarning(username, reason, reporter);
+		
+		WarningUtil.fileWarning( plugin, username, reason, reporter);
 		
 		for(Player pl: plugin.getServer().getOnlinePlayers()) {
 			if(username.equalsIgnoreCase(pl.getName())){

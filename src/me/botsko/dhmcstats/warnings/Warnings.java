@@ -1,4 +1,4 @@
-package me.botsko.dhmcstats.db;
+package me.botsko.dhmcstats.warnings;
 
 public class Warnings {
 	

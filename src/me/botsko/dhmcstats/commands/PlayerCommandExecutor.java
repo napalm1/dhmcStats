@@ -5,14 +5,14 @@ import java.text.ParseException;
 import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
-import me.botsko.dhmcstats.db.Alts;
+import me.botsko.dhmcstats.joins.Alts;
+import me.botsko.dhmcstats.joins.JoinUtil;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
@@ -119,7 +119,6 @@ public class PlayerCommandExecutor implements CommandExecutor  {
     	
     }
     
-    
     /**
      * 
      * @param username
@@ -130,13 +129,12 @@ public class PlayerCommandExecutor implements CommandExecutor  {
     	sender.sendMessage( plugin.playerMsg( "Comparing IPs for " + username + " - showing *possible* alt accounts: " ) );
     	
     	// Pull all items matching this name
-		List<Alts> alt_accts = plugin.getDbDAO().getPlayerAlts(username);
+		List<Alts> alt_accts = JoinUtil.getPlayerAlts( plugin, username );
 		if(!alt_accts.isEmpty()){
 			for(Alts alt : alt_accts){
 				sender.sendMessage( plugin.playerMsg( "["+ alt.ip + "] " + ChatColor.GRAY + alt.username ));
 //				Bukkit.dispatchCommand(sender, "lookup " + alt.username);
 			}
 		}
-    	
     }
 }

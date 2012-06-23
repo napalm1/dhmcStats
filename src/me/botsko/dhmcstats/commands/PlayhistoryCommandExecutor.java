@@ -7,11 +7,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.playtime.Playtime;
+import me.botsko.dhmcstats.playtime.PlaytimeUtil;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
@@ -71,30 +72,12 @@ public class PlayhistoryCommandExecutor implements CommandExecutor  {
     	
     	sender.sendMessage( plugin.playerMsg( "Most recent 7 days of playtime for " + username + ": " ) );
     	
-    	HashMap<Integer,String> scores = plugin.getDbDAO().getPayerPlaytimeHistory(username);
-    	Iterator<Entry<Integer, String>> it = scores.entrySet().iterator();
-
+    	HashMap<Playtime,String> scores = PlaytimeUtil.getPlayerPlaytimeHistory( plugin, username );
+    	Iterator<Entry<Playtime, String>> it = scores.entrySet().iterator();
     	while (it.hasNext()) {
-    		Map.Entry<Integer, String> pairs = (Map.Entry<Integer, String>)it.next();
-    		int[] times = splitToComponentTimes(pairs.getKey());
-    		sender.sendMessage( plugin.playerMsg( pairs.getValue() + ": " + times[0] + "hrs, " + times[1] + " mins"  ) );
+    		Map.Entry<Playtime, String> pairs = (Map.Entry<Playtime, String>)it.next();
+    		Playtime pt = pairs.getKey();
+    		sender.sendMessage( plugin.playerMsg( pairs.getValue() + ": " + pt.getHours() + "hrs, " + pt.getMinutes() + " mins"  ) );
     	}
-    }
-    
-    
-    /**
-     * Convert seconds into hours/mins/secs
-     * 
-     * @param biggy
-     * @return
-     */
-    private static int[] splitToComponentTimes(int biggy){
-        int hours = (int) biggy / 3600;
-        int remainder = (int) biggy - hours * 3600;
-        int mins = remainder / 60;
-        remainder = remainder - mins * 60;
-        int secs = remainder;
-        int[] ints = {hours , mins , secs};
-        return ints;
     }
 }

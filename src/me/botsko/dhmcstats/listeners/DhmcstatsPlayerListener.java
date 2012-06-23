@@ -7,7 +7,9 @@ import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
 import me.botsko.dhmcstats.commands.RankCommandExecutor;
-import me.botsko.dhmcstats.db.Warnings;
+import me.botsko.dhmcstats.joins.JoinUtil;
+import me.botsko.dhmcstats.warnings.WarningUtil;
+import me.botsko.dhmcstats.warnings.Warnings;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -62,7 +64,7 @@ public class DhmcstatsPlayerListener implements Listener {
         java.util.Date date= new java.util.Date();
         String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
         String ip = player.getAddress().getAddress().getHostAddress().toString();
-		plugin.getDbDAO().registerPlayerJoin( username, ts, ip, plugin.getOnlineCount() );
+        JoinUtil.registerPlayerJoin( plugin, username, ts, ip, plugin.getOnlineCount() );
         
         // Check the user qualifies for any rank, alert mods
         String promo = "";
@@ -87,7 +89,7 @@ public class DhmcstatsPlayerListener implements Listener {
         
         
         // If the user has three or more warnings, alert staff
-        List<Warnings> warnings = plugin.getDbDAO().getPlayerWarnings(username);
+        List<Warnings> warnings = WarningUtil.getPlayerWarnings( plugin, username );
         if(warnings.size() >= 3){
         	for(Player pl: plugin.getServer().getOnlinePlayers()) {
         		if(plugin.getPermissions().has(pl, "dhmcstats.warn")){
@@ -110,7 +112,7 @@ public class DhmcstatsPlayerListener implements Listener {
         java.util.Date date= new java.util.Date();
         String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
         
-        plugin.getDbDAO().registerPlayerQuit( username, ts );
+        JoinUtil.registerPlayerQuit( plugin, username, ts );
         
     }
 }
