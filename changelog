@@ -71,3 +71,7 @@ Version 0.2.6
 - Adding sanity check to test for join data versus online
 - Changed disconnect checks to every minute
 - Adding /player alts [name]
+Version 0.2.7
+- Added blog posts to announcements
+- Trusted doesn't force a wait of a full 24 hours, just the next day
+- Pulling alts from join_ips table, is much faster
