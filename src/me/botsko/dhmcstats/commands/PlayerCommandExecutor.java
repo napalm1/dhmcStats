@@ -108,7 +108,7 @@ public class PlayerCommandExecutor implements CommandExecutor  {
     	Bukkit.dispatchCommand(sender, "lookup " + username);
     	Bukkit.dispatchCommand(sender, "warnings " + username);
     	
-    	PermissionUser user = plugin.getPermissions().getUser( username );
+    	PermissionUser user = plugin.permissions.getUser( username );
     	
     	String delim = "";
         for ( PermissionGroup group : user.getGroups()) {

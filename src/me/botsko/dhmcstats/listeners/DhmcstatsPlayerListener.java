@@ -1,13 +1,13 @@
 package me.botsko.dhmcstats.listeners;
 
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
-import me.botsko.dhmcstats.commands.RankCommandExecutor;
 import me.botsko.dhmcstats.joins.JoinUtil;
+import me.botsko.dhmcstats.rank.Rank;
+import me.botsko.dhmcstats.rank.RankUtil;
 import me.botsko.dhmcstats.warnings.WarningUtil;
 import me.botsko.dhmcstats.warnings.Warnings;
 
@@ -20,7 +20,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.exceptions.RankingException;
 
 public class DhmcstatsPlayerListener implements Listener {
 
@@ -53,9 +53,10 @@ public class DhmcstatsPlayerListener implements Listener {
     
     /**
      * Save the timestamp and player data upon the JOIN event
+     * @throws RankingException 
      */
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerJoin(final PlayerJoinEvent event) {
+    public void onPlayerJoin(final PlayerJoinEvent event) throws RankingException {
         
         Player player = event.getPlayer();
         String username = player.getName();
@@ -67,32 +68,30 @@ public class DhmcstatsPlayerListener implements Listener {
         JoinUtil.registerPlayerJoin( plugin, username, ts, ip, plugin.getOnlineCount() );
         
         // Check the user qualifies for any rank, alert mods
-        String promo = "";
         try {
-        	RankCommandExecutor rce = new RankCommandExecutor(plugin);
-			promo = rce.checkQualifiesFor( username, player );
-		} catch (SQLException e) {
-			e.printStackTrace();
+			Rank rank = RankUtil.getPlayerRank( plugin, username );
+			if(rank.getPlayerQualifiesForPromo()){
+				
+				// auto promote
+				plugin.permissions.getUser(username).promote( plugin.permissions.getUser("viveleroi"), "default" );
+				
+				// announce the promotion
+				plugin.messageAllPlayers("Congratulations, " + ChatColor.AQUA + username + ChatColor.WHITE + " on your promotion to " + ChatColor.AQUA + rank.getQualifiedPromotionRank() );
+				
+				// log the promotion
+				plugin.log("Auto promoted " + username + " to " + rank.getQualifiedPromotionRank());
+				
+			}
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-        // if string not empty, notify lead mods
-        if(promo.indexOf("qualify") > 1 || promo.indexOf("qualifies") > 1){
-        	promo = promo.replace("You", username);
-	        for(Player pl: plugin.getServer().getOnlinePlayers()) {
-	        	PermissionUser user = plugin.permissions.getUser( pl.getName() );
-	            if(user.inGroup( "LeadModerator" ) || user.inGroup( "Admin" )) {
-	            	pl.sendMessage(promo);
-	            }
-	        }
-        }
         
         
         // If the user has three or more warnings, alert staff
         List<Warnings> warnings = WarningUtil.getPlayerWarnings( plugin, username );
         if(warnings.size() >= 3){
         	for(Player pl: plugin.getServer().getOnlinePlayers()) {
-        		if(plugin.getPermissions().has(pl, "dhmcstats.warn")){
+        		if(pl.hasPermission("dhmcstats.warn")){
         			pl.sendMessage( plugin.playerMsg(username + " now has three warnings. " + ChatColor.RED + "Action must be taken.") );
         		}
         	}

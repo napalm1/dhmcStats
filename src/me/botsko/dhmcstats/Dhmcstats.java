@@ -24,7 +24,6 @@ import me.botsko.dhmcstats.commands.PlayerCommandExecutor;
 import me.botsko.dhmcstats.commands.PlayerstatsCommandExecutor;
 import me.botsko.dhmcstats.commands.PlayhistoryCommandExecutor;
 import me.botsko.dhmcstats.commands.RankCommandExecutor;
-import me.botsko.dhmcstats.commands.RankallCommandExecutor;
 import me.botsko.dhmcstats.commands.ScoresCommandExecutor;
 import me.botsko.dhmcstats.commands.SeenCommandExecutor;
 import me.botsko.dhmcstats.commands.WarnCommandExecutor;
@@ -82,15 +81,6 @@ public class Dhmcstats extends JavaPlugin {
 	
 	/**
 	 * 
-	 * @return
-	 */
-	public PermissionManager getPermissions(){
-		return permissions;
-	}
-	
-	
-	/**
-	 * 
 	 */
 	private void handleConfig(){
 		
@@ -136,7 +126,6 @@ public class Dhmcstats extends JavaPlugin {
 		getCommand("player").setExecutor( (CommandExecutor) new PlayerCommandExecutor(this) );
 		getCommand("playerstats").setExecutor( (CommandExecutor) new PlayerstatsCommandExecutor(this) );
 		getCommand("rank").setExecutor( (CommandExecutor) new RankCommandExecutor(this) );
-		getCommand("rankall").setExecutor( (CommandExecutor) new RankallCommandExecutor(this) );
 		getCommand("seen").setExecutor( (CommandExecutor) new SeenCommandExecutor(this) );
 		getCommand("ison").setExecutor( (CommandExecutor) new IsonCommandExecutor(this) );
 		getCommand("scores").setExecutor( (CommandExecutor) new ScoresCommandExecutor(this) );
