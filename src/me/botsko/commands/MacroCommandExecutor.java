@@ -82,6 +82,9 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		if(choice.equalsIgnoreCase("crap")){
 			say("&dSorry but we're not falling for your crap.");
 		}
+		if(choice.equalsIgnoreCase("donate")){
+			say("&dDonate at our site by going to http://www.dhmc.us/help/donate/");	 
+		}
 	}
 	
 	
