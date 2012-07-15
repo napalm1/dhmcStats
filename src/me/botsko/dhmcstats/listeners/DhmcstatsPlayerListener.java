@@ -67,7 +67,7 @@ public class DhmcstatsPlayerListener implements Listener {
         String ip = player.getAddress().getAddress().getHostAddress().toString();
         JoinUtil.registerPlayerJoin( plugin, username, ts, ip, plugin.getOnlineCount() );
         
-        // Check the user qualifies for any rank, alert mods
+        // Check the user qualifies for any rank
         try {
 			Rank rank = RankUtil.getPlayerRank( plugin, username );
 			if(rank.getPlayerQualifiesForPromo()){

@@ -32,6 +32,9 @@ public class Rank {
 		this.playtime = playtime;
 		this.permissions_groups = permissions_groups;
 		
+		System.out.print( "Joined: " + joined );
+		System.out.print( "Played: " + playtime );
+		
 		setDaysSinceJoin();
 		setPlayerQualifications();
 		
@@ -75,9 +78,20 @@ public class Rank {
 				return (message_is_for_self ? "You're" : "Vive's") + " rank is Pure Awesome. Silly you, checking the owner's rank.";
 			} else {
 			
+				System.out.print( "Is Promotable: " + isGroupPromotable(group) );
+				
+				System.out.print( "Qualifies For: " + getQualifiedPromotionRank() );
+				
+				Group promotion_rank = getQualifiedPromotionRank();
+				
 				// is group promotable?
 				if(isGroupPromotable(group)){
-					return (message_is_for_self ? "You qualify" : username+" qualifies")+ " for " + ChatColor.AQUA + " " + getQualifiedPromotionRank();
+					if(promotion_rank != null){
+						return (message_is_for_self ? "You qualify" : username+" qualifies")+ " for " + ChatColor.AQUA + " " + promotion_rank;
+					} else {
+						// get message for next rank
+						return (message_is_for_self ? "You have" : username+" has") + " TEMP playtime left"; 
+					}
 				} else {
 					if(group.equalsIgnoreCase("owner")){
 						return (message_is_for_self ? "You're" : username+" is") + " an admin. Nowhere to go...";
@@ -221,4 +235,40 @@ public class Rank {
 		}
 		return false;
 	}
+	
+	
+	
+	/**
+     * Improves the message about remaining time to avoid confusion with the negative numbers.
+     * @param rank
+     * @param min_days
+     * @param days
+     * @param min_hours
+     * @param hours
+     * @return
+     */
+//    private String timeRemaining(){
+//    	
+//    	int remain_days = (min_days - days_since_join);
+//		int remain_hrs = (min_hours - playtime.getHours());
+//
+//		plugin.debug("Rank Check: remaining days: " + remain_days + " remaining hours: " + remain_hrs);
+//
+//		// If days remain, but no hours
+//		String time_left = " You need " + remain_days + " days, " + remain_hrs + " hours for " + rank; // default
+//		if(remain_days >= 0 && remain_hrs <= 0){
+//			time_left = rank+" in "+remain_days+" days. "+string_remain+" the minimum playtime hours requirement.";
+//		}
+//		// If hours remain, but no days
+//		if(remain_days <= 0 && remain_hrs >= 0){
+//			time_left = rank+" in "+remain_hrs+" hours of playtime. "+string_remain+" the minimum days requirement.";
+//		}
+//		// If both remain
+//		if(remain_days >= 0 && remain_hrs >= 0){
+//			time_left = rank+" in "+remain_hrs+" hours of playtime, in at least " + remain_days + " more days (since joined).";
+//		}
+//
+//		return time_left;
+//    	
+//    }
 }

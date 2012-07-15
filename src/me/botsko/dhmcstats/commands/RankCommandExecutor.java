@@ -59,7 +59,7 @@ public class RankCommandExecutor implements CommandExecutor  {
 		    	
 				if(rank != null){
 			    	// msg the player time remaining
-					rank.getPromotionStatusMessage( tmp, (player.equals(sender)) );
+					player.sendMessage( rank.getPromotionStatusMessage( tmp, (player.equals(sender)) ) );
 				}
 				
 				return true;
