@@ -2,21 +2,62 @@ package me.botsko.dhmcstats.rank;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 
 import org.bukkit.ChatColor;
 
 import me.botsko.dhmcstats.playtime.Playtime;
+import me.botsko.dhmcstats.rank.groups.Group;
+import me.botsko.dhmcstats.rank.groups.Player;
+import me.botsko.dhmcstats.rank.groups.RespectedPlayer;
+import me.botsko.dhmcstats.rank.groups.TrustedPlayer;
 
 public class Rank {
 	
+	/**
+	 * 
+	 */
 	protected Playtime playtime;
+	
+	/**
+	 * 
+	 */
 	protected Date joined;
+	
+	/**
+	 * 
+	 */
 	protected int days_since_join = 0;
+	
+	/**
+	 * 
+	 */
 	protected boolean player_joined_today = false;
+	
+	/**
+	 * 
+	 */
 	protected String[] permissions_groups;
-	protected boolean player_rank_is_promotable = false;
+	
+	/**
+	 * 
+	 */
 	protected boolean player_qualifies_for_promo = false;
+	
+	/**
+	 * 
+	 */
+	protected Group current_rank_in_ladder;
+	
+	/**
+	 * 
+	 */
 	protected Group next_rank_in_ladder;
+	
+	/**
+	 * 
+	 */
+	protected HashMap<UserGroup,Group> dhmcRanks = new HashMap<UserGroup,Group>();
 	
 	
 	/**
@@ -28,15 +69,36 @@ public class Rank {
 	 */
 	public Rank( Date joined, Playtime playtime, String[] permissions_groups){
 		
+//		Group t = new TrustedPlayer();
+		
+		// add all groups
+		dhmcRanks.put(UserGroup.Player, new Player());
+		dhmcRanks.put(UserGroup.TrustedPlayer, new TrustedPlayer());
+		dhmcRanks.put(UserGroup.RespectedPlayer, new RespectedPlayer());
+//		dhmcRanks.put(UserGroup.LegendaryPlayer, new LegendaryPlayer());
+		
 		this.joined = joined;
 		this.playtime = playtime;
 		this.permissions_groups = permissions_groups;
 		
 		System.out.print( "Joined: " + joined );
-		System.out.print( "Played: " + playtime );
+		System.out.print( "Played: " + playtime.hours );
 		
 		setDaysSinceJoin();
-		setPlayerQualifications();
+		
+		// Pull the group the user is in now
+		UserGroup current = getCurrentRank();
+		current_rank_in_ladder = dhmcRanks.get( current );
+		
+		System.out.print( "Current Rank: " + current.toString() );
+		
+		// Pull the next rank
+		next_rank_in_ladder = current_rank_in_ladder.getNextRank();
+		System.out.print( "Next Rank: " + next_rank_in_ladder.getNiceName() );
+		
+		// Determine if player has earned the next rank
+		player_qualifies_for_promo = playerHasEarnedRank();
+
 		
 	}
 	
@@ -59,7 +121,7 @@ public class Rank {
 	 * 
 	 * @return
 	 */
-	public Group getQualifiedPromotionRank(){
+	public Group getNextRank(){
 		return next_rank_in_ladder;
 	}
 	
@@ -71,37 +133,45 @@ public class Rank {
 	 * @return
 	 */
 	public String getPromotionStatusMessage( String username, boolean message_is_for_self ){
-		
-		for(String group : permissions_groups){
+
+		if(getPlayerQualifiesForPromo()){
+			return (message_is_for_self ? "You qualify" : username+" qualifies")+ " for " + ChatColor.AQUA + " " + next_rank_in_ladder.getNiceName();
+		} else {
 			
-			if(group.equalsIgnoreCase("owner")){
+			// Is Vive
+			if(current_rank_in_ladder.getNiceName().equals("Owner")){
 				return (message_is_for_self ? "You're" : "Vive's") + " rank is Pure Awesome. Silly you, checking the owner's rank.";
+			}
+			else if(current_rank_in_ladder.getNiceName().equals("Admin")){
+				return (message_is_for_self ? "You're" : username+" is") + " an admin. Nowhere to go...";
+			}
+			else if(!next_rank_in_ladder.mayBeAutoPromotedTo()){
+				return (message_is_for_self ? "You're" : username+" is") + " a "+current_rank_in_ladder.getNiceName().toLowerCase()+". A promotion is up to Vive";
 			} else {
-			
-				System.out.print( "Is Promotable: " + isGroupPromotable(group) );
 				
-				System.out.print( "Qualifies For: " + getQualifiedPromotionRank() );
 				
-				Group promotion_rank = getQualifiedPromotionRank();
-				
-				// is group promotable?
-				if(isGroupPromotable(group)){
-					if(promotion_rank != null){
-						return (message_is_for_self ? "You qualify" : username+" qualifies")+ " for " + ChatColor.AQUA + " " + promotion_rank;
-					} else {
-						// get message for next rank
-						return (message_is_for_self ? "You have" : username+" has") + " TEMP playtime left"; 
-					}
-				} else {
-					if(group.equalsIgnoreCase("owner")){
-						return (message_is_for_self ? "You're" : username+" is") + " an admin. Nowhere to go...";
-					} else {
-						return (message_is_for_self ? "You're" : username+" is") + " a "+group.toLowerCase()+". A promotion is up to Vive";
-					}
+		    	int remain_days = (next_rank_in_ladder.getDaysRequired() - days_since_join);
+				int remain_hrs = (next_rank_in_ladder.getHoursRequired() - playtime.getHours());
+		
+				// If days remain, but no hours
+				String time_left = " You need to play " + remain_hrs + " hours over at least "+remain_days+" days for " + next_rank_in_ladder.getNiceName();
+				if(remain_days >= 0 && remain_hrs <= 0){
+					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_days+" days. "+(message_is_for_self ? "You meet" : username+" meets")+" the minimum playtime hours requirement.";
 				}
+				// If hours remain, but no days
+				if(remain_days <= 0 && remain_hrs >= 0){
+					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime. "+(message_is_for_self ? "You meet" : username+" meets")+" the minimum days requirement.";
+				}
+				// If both remain
+				if(remain_days >= 0 && remain_hrs >= 0){
+					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime, in at least " + remain_days + " more days (since joined).";
+				}
+				
+				// They can be promoted, they're just not ready
+				return time_left; 
+				
 			}
 		}
-		return null;
 	}
 	
 	
@@ -132,12 +202,15 @@ public class Rank {
 	 * 
 	 * @return
 	 */
-	protected boolean isGroupPromotable( String group ){
-		if(group.equalsIgnoreCase("Player") || group.equalsIgnoreCase("TrustedPlayer") || group.equalsIgnoreCase("RespectedPlayer")){
-			return true;
+	protected UserGroup getCurrentRank(){
+		for(String group : permissions_groups){
+			UserGroup g = UserGroup.valueOf(group);
+			if(g != null){
+				return g;
+			}
 		}
-		return false;
-	}	
+		return null;
+	}
 	
 	
 	/**
@@ -165,110 +238,22 @@ public class Rank {
 	
 	/**
 	 * 
-	 */
-	protected void setPlayerQualifications(){
-		for(String group : permissions_groups){
-			// is group promotable?
-			if(isGroupPromotable(group)){
-				
-				player_rank_is_promotable = true;
-				// does the user playtime meet rank-up qualifications?
-				setPlayerQualifiesForPromotion( group );
-				
-			}
-		}
-	}
-	
-	
-	/**
-	 * 
-	 */
-	protected void setPlayerQualifiesForPromotion( String group ){
-		// Using the player's current group, do they qualify for a rank-up?
-		if(group.equalsIgnoreCase("Player")){
-			if(playerHasEarnedRank( Group.Player )){
-				next_rank_in_ladder = Group.Player;
-				player_qualifies_for_promo = true;
-			}
-		}
-		if(group.equalsIgnoreCase("TrustedPlayer")){
-			if(playerHasEarnedRank( Group.TrustedPlayer )){
-				next_rank_in_ladder = Group.TrustedPlayer;
-				player_qualifies_for_promo = true;
-			}
-		}
-		if(group.equalsIgnoreCase("RespectedPlayer")){
-			if(playerHasEarnedRank( Group.RespectedPlayer )){
-				next_rank_in_ladder = Group.RespectedPlayer;
-				player_qualifies_for_promo = true;
-			}
-		}
-	}
-	
-	
-	/**
-	 * 
 	 * @param group
 	 * @return
 	 */
-	protected boolean playerHasEarnedRank( Group group ){
-		
-		// Trusted
-		if(group == Group.Player){
-			if(!getPlayerJoinedToday() && playtime.getHours() >= 5){
-				return true;
-			}
-		}
-		
-		// Respected
-		if(group == Group.TrustedPlayer){
-			if(getDaysSinceJoin() >= 5 && playtime.getHours() >= 20){
-				return true;
-			}
-		}
-		
-		// Legendary
-		if(group == Group.RespectedPlayer){
-			if(getDaysSinceJoin() >= 25 && playtime.getHours() >= 80){
-				return true;
+	protected boolean playerHasEarnedRank(){
+		// No promotions on first day
+		if(!getPlayerJoinedToday()){
+			if(next_rank_in_ladder != null){
+				if(next_rank_in_ladder.mayBeAutoPromotedTo()){
+					if(playtime.getHours() >= next_rank_in_ladder.getHoursRequired()){
+						if(playtime.getDays() >= next_rank_in_ladder.getDaysRequired()){
+							return true;
+						}
+					}
+				}
 			}
 		}
 		return false;
 	}
-	
-	
-	
-	/**
-     * Improves the message about remaining time to avoid confusion with the negative numbers.
-     * @param rank
-     * @param min_days
-     * @param days
-     * @param min_hours
-     * @param hours
-     * @return
-     */
-//    private String timeRemaining(){
-//    	
-//    	int remain_days = (min_days - days_since_join);
-//		int remain_hrs = (min_hours - playtime.getHours());
-//
-//		plugin.debug("Rank Check: remaining days: " + remain_days + " remaining hours: " + remain_hrs);
-//
-//		// If days remain, but no hours
-//		String time_left = " You need " + remain_days + " days, " + remain_hrs + " hours for " + rank; // default
-//		if(remain_days >= 0 && remain_hrs <= 0){
-//			time_left = rank+" in "+remain_days+" days. "+string_remain+" the minimum playtime hours requirement.";
-//		}
-//		// If hours remain, but no days
-//		if(remain_days <= 0 && remain_hrs >= 0){
-//			time_left = rank+" in "+remain_hrs+" hours of playtime. "+string_remain+" the minimum days requirement.";
-//		}
-//		// If both remain
-//		if(remain_days >= 0 && remain_hrs >= 0){
-//			time_left = rank+" in "+remain_hrs+" hours of playtime, in at least " + remain_days + " more days (since joined).";
-//		}
-//
-//		return time_left;
-//    	
-//    }
 }

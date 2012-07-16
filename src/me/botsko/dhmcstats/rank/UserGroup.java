@@ -1,5 +1,5 @@
 package me.botsko.dhmcstats.rank;
 
-public enum Group {
+public enum UserGroup {
 	Player, TrustedPlayer, RespectedPlayer, LegendaryPlayer, MythicalPlayer, EternalPlayer, NewModerator, Moderator, LeadModerator, Admin, Owner
 }

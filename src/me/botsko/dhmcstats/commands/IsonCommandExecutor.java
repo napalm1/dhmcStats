@@ -5,6 +5,7 @@ import me.botsko.dhmcstats.Dhmcstats;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class IsonCommandExecutor implements CommandExecutor  {
@@ -38,7 +39,7 @@ public class IsonCommandExecutor implements CommandExecutor  {
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) throws IllegalPluginAccessException {
 		if (args.length == 1){
 			 String ison = plugin.expandName(args[0]);
-			 if(ison != null){
+			 if(isOnline( ison )){
 				 sender.sendMessage( plugin.playerMsg( ison + " is online" ) ); 
 			 } else {
 				 sender.sendMessage( plugin.playerError( args[0] + " is not online" ) ); 
@@ -46,5 +47,20 @@ public class IsonCommandExecutor implements CommandExecutor  {
 			 return true;
 		}
 		return false; 
+	}
+	
+	
+	/**
+	 * 
+	 * @param username
+	 * @return
+	 */
+	public boolean isOnline( String username ){
+		for(Player pl : plugin.getServer().getOnlinePlayers()){
+			if(pl.getName().equals(username)){
+				return true;
+			}
+		}
+		return false;
 	}
 }

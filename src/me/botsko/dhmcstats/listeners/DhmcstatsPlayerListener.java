@@ -76,10 +76,10 @@ public class DhmcstatsPlayerListener implements Listener {
 				plugin.permissions.getUser(username).promote( plugin.permissions.getUser("viveleroi"), "default" );
 				
 				// announce the promotion
-				plugin.messageAllPlayers("Congratulations, " + ChatColor.AQUA + username + ChatColor.WHITE + " on your promotion to " + ChatColor.AQUA + rank.getQualifiedPromotionRank() );
+				plugin.messageAllPlayers( plugin.playerMsg( "Congratulations, " + ChatColor.AQUA + username + ChatColor.WHITE + " on your promotion to " + ChatColor.AQUA + rank.getNextRank().getNiceName() ) );
 				
 				// log the promotion
-				plugin.log("Auto promoted " + username + " to " + rank.getQualifiedPromotionRank());
+				plugin.log("Auto promoted " + username + " to " + rank.getNextRank().getNiceName());
 				
 			}
 		} catch (ParseException e) {
