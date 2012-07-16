@@ -60,9 +60,9 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		if(choice.equalsIgnoreCase("promo")){
 			say("&dRank and Promotion Questions? Please read: http://dhmc.us/help/promo");
 		}
-		if(choice.equalsIgnoreCase("faq")){
-			say("&dMap Change Questions? Please read: http://dhmc.us/help/faq");
-		}
+//		if(choice.equalsIgnoreCase("faq")){
+//			say("&dMap Change Questions? Please read: http://dhmc.us/help/faq");
+//		}
 		if(choice.equalsIgnoreCase("mods")){
 			say("&dVive isn't the only mod here. ;)");
 		}
@@ -73,7 +73,15 @@ public class MacroCommandExecutor implements CommandExecutor  {
 			say("&dThink you qualify for myth? File a modreq stating your qualifications. Find them here: http://dhmc.us/help/promo/#mythical");
 		}
 		if(choice.equalsIgnoreCase("poi")){
-			say("&dSubmit POIs from our website. We review them all at once. Approved say 'POI' in gallery: http://www.flickr.com/photos/botskonet/");
+			say("&dSubmit your creation on our website (dhmc.us). Staff vote them up/down. 15 votes you win a Point of Interest.");
+		}
+		if(choice.equalsIgnoreCase("website")){
+			say("&dOur website: http://dhmc.us - Forums, news, gallery, contests, and more! Create account here: http://dhmc.us/users/signup/");
+		}
+		
+		// Temporary ones
+		if(choice.equalsIgnoreCase("reset")){
+			say("&dSounds like you didn't read the Seriously Important 1.3 Guide: http://bit.ly/S6HYY5");
 		}
 	}
 	
