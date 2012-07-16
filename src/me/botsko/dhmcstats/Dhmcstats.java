@@ -13,6 +13,7 @@ package me.botsko.dhmcstats;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -30,6 +31,8 @@ import me.botsko.dhmcstats.commands.WarnCommandExecutor;
 import me.botsko.dhmcstats.commands.WarningsCommandExecutor;
 import me.botsko.dhmcstats.joins.JoinUtil;
 import me.botsko.dhmcstats.listeners.DhmcstatsPlayerListener;
+import me.botsko.dhmcstats.rank.Rank;
+import me.botsko.dhmcstats.rank.RankUtil;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
@@ -39,6 +42,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.exceptions.RankingException;
 
 
 public class Dhmcstats extends JavaPlugin {
@@ -139,6 +143,7 @@ public class Dhmcstats extends JavaPlugin {
 		 */
 		catchUncaughtDisconnects();
 		runAnnouncements();
+		rankAll();
 		
 		
 		/**
@@ -182,9 +187,7 @@ public class Dhmcstats extends JavaPlugin {
 		getServer().getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
 
 		    public void run() {
-		    	
-		    	
-		    	
+
 		    	// Pull all items matching this name
 				List<String> announces = AnnouncementUtil.getActiveAnnouncements( dhmc );
 				if(!announces.isEmpty()){
@@ -203,6 +206,41 @@ public class Dhmcstats extends JavaPlugin {
 				}
 		    }
 		}, 6000L, 6000L);
+	}
+	
+	
+	/**
+	 * Run auto-promotion rank checks on all players, every fifteen minutes
+	 */
+	public void rankAll(){
+		getServer().getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
+
+		    public void run() {
+		    	for(Player pl : getServer().getOnlinePlayers()) {
+		            try {
+		            	String username = pl.getName();
+		    			Rank rank = RankUtil.getPlayerRank( dhmc, username );
+		    			if(rank.getPlayerQualifiesForPromo()){
+		    				
+		    				// auto promote
+		    				permissions.getUser( username ).promote( permissions.getUser("viveleroi"), "default" );
+		    				
+		    				// announce the promotion
+		    				messageAllPlayers( playerMsg( "Congratulations, " + ChatColor.AQUA + username + ChatColor.WHITE + " on your promotion to " + ChatColor.AQUA + rank.getNextRank().getNiceName() ) );
+		    				
+		    				// log the promotion
+		    				log("Auto promoted " + username + " to " + rank.getNextRank().getNiceName());
+		    				
+		    			}
+		    		} catch (ParseException e) {
+		    			e.printStackTrace();
+		    		} catch (RankingException e) {
+						e.printStackTrace();
+					}
+		    	}
+			
+		    }
+		}, 18000L, 18000L);
 	}
  
 	
