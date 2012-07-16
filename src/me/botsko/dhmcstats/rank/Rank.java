@@ -7,7 +7,15 @@ import java.util.HashMap;
 import org.bukkit.ChatColor;
 
 import me.botsko.dhmcstats.playtime.Playtime;
+import me.botsko.dhmcstats.rank.groups.Admin;
+import me.botsko.dhmcstats.rank.groups.EternalPlayer;
 import me.botsko.dhmcstats.rank.groups.Group;
+import me.botsko.dhmcstats.rank.groups.LeadModerator;
+import me.botsko.dhmcstats.rank.groups.LegendaryPlayer;
+import me.botsko.dhmcstats.rank.groups.Moderator;
+import me.botsko.dhmcstats.rank.groups.MythicalPlayer;
+import me.botsko.dhmcstats.rank.groups.NewModerator;
+import me.botsko.dhmcstats.rank.groups.Owner;
 import me.botsko.dhmcstats.rank.groups.Player;
 import me.botsko.dhmcstats.rank.groups.RespectedPlayer;
 import me.botsko.dhmcstats.rank.groups.TrustedPlayer;
@@ -68,21 +76,23 @@ public class Rank {
 	 * @param messages_for_self
 	 */
 	public Rank( Date joined, Playtime playtime, String[] permissions_groups){
-		
-//		Group t = new TrustedPlayer();
-		
+
 		// add all groups
 		dhmcRanks.put(UserGroup.Player, new Player());
 		dhmcRanks.put(UserGroup.TrustedPlayer, new TrustedPlayer());
 		dhmcRanks.put(UserGroup.RespectedPlayer, new RespectedPlayer());
-//		dhmcRanks.put(UserGroup.LegendaryPlayer, new LegendaryPlayer());
+		dhmcRanks.put(UserGroup.LegendaryPlayer, new LegendaryPlayer());
+		dhmcRanks.put(UserGroup.MythicalPlayer, new MythicalPlayer());
+		dhmcRanks.put(UserGroup.EternalPlayer, new EternalPlayer());
+		dhmcRanks.put(UserGroup.NewModerator, new NewModerator());
+		dhmcRanks.put(UserGroup.Moderator, new Moderator());
+		dhmcRanks.put(UserGroup.LeadModerator, new LeadModerator());
+		dhmcRanks.put(UserGroup.Admin, new Admin());
+		dhmcRanks.put(UserGroup.Owner, new Owner());
 		
 		this.joined = joined;
 		this.playtime = playtime;
 		this.permissions_groups = permissions_groups;
-		
-		System.out.print( "Joined: " + joined );
-		System.out.print( "Played: " + playtime.hours );
 		
 		setDaysSinceJoin();
 		
@@ -90,15 +100,11 @@ public class Rank {
 		UserGroup current = getCurrentRank();
 		current_rank_in_ladder = dhmcRanks.get( current );
 		
-		System.out.print( "Current Rank: " + current.toString() );
-		
 		// Pull the next rank
 		next_rank_in_ladder = current_rank_in_ladder.getNextRank();
-		System.out.print( "Next Rank: " + next_rank_in_ladder.getNiceName() );
 		
 		// Determine if player has earned the next rank
 		player_qualifies_for_promo = playerHasEarnedRank();
-
 		
 	}
 	
@@ -146,25 +152,34 @@ public class Rank {
 				return (message_is_for_self ? "You're" : username+" is") + " an admin. Nowhere to go...";
 			}
 			else if(!next_rank_in_ladder.mayBeAutoPromotedTo()){
-				return (message_is_for_self ? "You're" : username+" is") + " a "+current_rank_in_ladder.getNiceName().toLowerCase()+". A promotion is up to Vive";
+				return (message_is_for_self ? "You're" : username+" is") + " "+current_rank_in_ladder.getNiceName()+". A promotion is up to Vive";
 			} else {
-				
 				
 		    	int remain_days = (next_rank_in_ladder.getDaysRequired() - days_since_join);
 				int remain_hrs = (next_rank_in_ladder.getHoursRequired() - playtime.getHours());
 		
 				// If days remain, but no hours
 				String time_left = " You need to play " + remain_hrs + " hours over at least "+remain_days+" days for " + next_rank_in_ladder.getNiceName();
-				if(remain_days >= 0 && remain_hrs <= 0){
+				if(remain_days > 0 && remain_hrs <= 0){
 					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_days+" days. "+(message_is_for_self ? "You meet" : username+" meets")+" the minimum playtime hours requirement.";
 				}
 				// If hours remain, but no days
-				if(remain_days <= 0 && remain_hrs >= 0){
+				if(remain_days <= 0 && remain_hrs > 0){
 					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime. "+(message_is_for_self ? "You meet" : username+" meets")+" the minimum days requirement.";
 				}
 				// If both remain
-				if(remain_days >= 0 && remain_hrs >= 0){
+				if(remain_days > 0 && remain_hrs > 0){
 					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime, in at least " + remain_days + " more days (since joined).";
+				}
+				// If trying to rank to trusted, check for the day after
+				if(next_rank_in_ladder.getNiceName().equalsIgnoreCase("trusted")){
+					if(days_since_join == 0){
+						if(remain_hrs > 0){
+							time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime, but joined today. Promotion tomorrow.";
+						} else {
+							time_left = (message_is_for_self ? "You've" : username+" has") + " played enough for " + next_rank_in_ladder.getNiceName()+", but joined today. Promotion tomorrow.";
+						}
+					}
 				}
 				
 				// They can be promoted, they're just not ready

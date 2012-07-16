@@ -2,16 +2,22 @@ package me.botsko.dhmcstats.rank.groups;
 
 public class RespectedPlayer extends Group {
 	
-	protected boolean is_promotable = true;
-	protected String nice_name = "Trusted";
-	protected int hours_required = 5;
-	protected int days_required = 1;
+	/**
+	 * 
+	 */
+	public RespectedPlayer(){
+		may_auto_promo_to = true;
+		nice_name = "Respected";
+		hours_required = 20;
+		days_required = 5;
+	}
+	
 	
 	/**
 	 * 
 	 * @return
 	 */
 	public Group getNextRank(){
-		return new RespectedPlayer();
+		return new LegendaryPlayer();
 	}
 }
