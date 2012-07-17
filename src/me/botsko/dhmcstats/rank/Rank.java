@@ -215,13 +215,32 @@ public class Rank {
 	
 	/**
 	 * 
+	 * @param test
+	 * @return
+	 */
+	public static boolean userGroupExists(String test) {
+
+	    for (UserGroup c : UserGroup.values()) {
+	        if (c.name().equals(test)) {
+	            return true;
+	        }
+	    }
+
+	    return false;
+	}
+	
+	
+	/**
+	 * 
 	 * @return
 	 */
 	protected UserGroup getCurrentRank(){
 		for(String group : permissions_groups){
-			UserGroup g = UserGroup.valueOf(group);
-			if(g != null){
-				return g;
+			if(userGroupExists(group)){
+				UserGroup g = UserGroup.valueOf(group);
+				if(g != null){
+					return g;
+				}
 			}
 		}
 		return null;

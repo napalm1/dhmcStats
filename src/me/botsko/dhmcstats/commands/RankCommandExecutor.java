@@ -59,7 +59,7 @@ public class RankCommandExecutor implements CommandExecutor  {
 		    	
 				if(rank != null){
 			    	// msg the player time remaining
-					player.sendMessage( plugin.playerMsg( rank.getPromotionStatusMessage( tmp, (player.equals(sender)) ) ) );
+					player.sendMessage( plugin.playerMsg( rank.getPromotionStatusMessage( tmp, (player.getName().equalsIgnoreCase(tmp)) ) ) );
 				}
 				
 				return true;
