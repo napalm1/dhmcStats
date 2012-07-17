@@ -83,6 +83,9 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		if(choice.equalsIgnoreCase("reset")){
 			say("&dSounds like you didn't read the Seriously Important 1.3 Guide: http://bit.ly/S6HYY5");
 		}
+		if(choice.equalsIgnoreCase("donate")){
+			say("&dDonate at our site by going to http://www.dhmc.us/help/donate/");	 
+		}
 	}
 	
 	
