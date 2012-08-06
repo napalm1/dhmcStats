@@ -281,7 +281,7 @@ public class Rank {
 			if(next_rank_in_ladder != null){
 				if(next_rank_in_ladder.mayBeAutoPromotedTo()){
 					if(playtime.getHours() >= next_rank_in_ladder.getHoursRequired()){
-						if(playtime.getDays() >= next_rank_in_ladder.getDaysRequired()){
+						if(days_since_join >= next_rank_in_ladder.getDaysRequired()){
 							return true;
 						}
 					}

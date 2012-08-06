@@ -24,7 +24,7 @@ public class PlaytimeUtil {
 	public static Playtime getPlaytime( Dhmcstats plugin, String username ) throws ParseException{
 		try {
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 			
 			// query for the null quit record for this player
 			PreparedStatement s;
@@ -92,7 +92,7 @@ public class PlaytimeUtil {
 	public static HashMap<Playtime,String> getPlayerPlaytimeHistory( Dhmcstats plugin, String username ){
 		try {
             
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 			
             PreparedStatement s;
     		s = plugin.conn.prepareStatement ("SELECT DATE_FORMAT(joins.player_join,'%Y-%m-%d') as playdate, SUM(playtime) as playtime FROM joins WHERE username = ? GROUP BY DATE_FORMAT(joins.player_join,'%Y-%m-%d') ORDER BY joins.player_join DESC LIMIT 7;");

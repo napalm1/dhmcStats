@@ -23,7 +23,7 @@ public class SeenUtil {
 		Date joined = null;
 		try {
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
             
             PreparedStatement s;
     		s = plugin.conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
@@ -62,7 +62,7 @@ public class SeenUtil {
 		Date seen = null;
 		try {
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
             
             PreparedStatement s;
     		s = plugin.conn.prepareStatement ("SELECT player_quit FROM joins WHERE username = ? AND player_quit IS NOT NULL ORDER BY player_quit DESC LIMIT 1;");

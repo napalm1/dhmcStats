@@ -19,7 +19,7 @@ public class JoinUtil {
 	 */
 	public static void registerPlayerJoin( Dhmcstats plugin, String username, String timestamp, String ip, int online_count ){
 		try {
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
             String str = String.format("INSERT INTO joins (username,player_join,ip,player_count) VALUES ('%s','%s','%s','%d')", username, timestamp, ip, online_count );
 	        PreparedStatement s = plugin.conn.prepareStatement(str);
 	        s.executeUpdate();
@@ -40,7 +40,7 @@ public class JoinUtil {
 	public static void registerPlayerQuit( Dhmcstats plugin, String username, String timestamp ){
 		try {
             
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
             
  			PreparedStatement s;
  			s = plugin.conn.prepareStatement ("SELECT id FROM joins WHERE username = ? AND player_quit IS NULL");
@@ -107,7 +107,7 @@ public class JoinUtil {
 	 */
 	protected static void forceDateForNullQuits( Dhmcstats plugin ){
 		try {
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
             java.util.Date date= new java.util.Date();
     		String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
 			String str = String.format("UPDATE joins SET player_quit = '%s' WHERE player_quit IS NULL", ts);
@@ -129,7 +129,7 @@ public class JoinUtil {
 	 */
 	protected static void forcePlaytimeForNullQuits( Dhmcstats plugin ){
 		try {
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 			String str = String.format("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE playtime IS NULL");
 	        PreparedStatement s = plugin.conn.prepareStatement( str );
     		s.executeQuery();
@@ -172,7 +172,7 @@ public class JoinUtil {
 	protected static void forceDateForOfflinePlayers( Dhmcstats plugin, String users ){
 		try {
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 			
 			if(!users.isEmpty()){
 				users = " AND username NOT IN ("+users+")";
@@ -200,7 +200,7 @@ public class JoinUtil {
 	protected static void forcePlaytimeForOfflinePlayers( Dhmcstats plugin, String users ){
 		try {
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 			
 			if(!users.isEmpty()){
 				users = " AND username NOT IN ("+users+")";
@@ -238,7 +238,7 @@ public class JoinUtil {
 		ArrayList<Alts> accounts = new ArrayList<Alts>();
 		try {
             
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 			
 			// Pull the IPs first
             PreparedStatement s;

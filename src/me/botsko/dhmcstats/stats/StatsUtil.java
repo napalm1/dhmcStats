@@ -18,7 +18,7 @@ public class StatsUtil {
 	public static int getPlayerJoinCount( Dhmcstats plugin ){
 		try {
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
             
             PreparedStatement s;
     		s = plugin.conn.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins`");
@@ -51,7 +51,7 @@ public class StatsUtil {
 	public static int getPlayerJoinTodayCount( Dhmcstats plugin ){
 		try {
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
             
             PreparedStatement s;
     		s = plugin.conn.prepareStatement ("SELECT COUNT( DISTINCT(username) ) FROM `joins` WHERE DATE_FORMAT(player_join,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d')");

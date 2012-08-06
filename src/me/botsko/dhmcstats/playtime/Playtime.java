@@ -16,14 +16,6 @@ public class Playtime {
 		splitToComponentTimes( playtime );
 	}
 	
-	
-	/**
-	 * @return the days
-	 */
-	public short getDays() {
-		return days;
-	}
-
 
 	/**
 	 * @return the hours

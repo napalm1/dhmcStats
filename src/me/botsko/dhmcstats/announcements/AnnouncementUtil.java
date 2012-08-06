@@ -22,8 +22,7 @@ public class AnnouncementUtil {
 		ArrayList<String> announces = new ArrayList<String>();
 		try {
             
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
-			
+			plugin.dbc();
             PreparedStatement s;
     		s = plugin.conn.prepareStatement ("SELECT announcement FROM announcements WHERE is_active = 1");
     		s.executeQuery();
@@ -46,14 +45,13 @@ public class AnnouncementUtil {
 			}
     		rs1.close();
     		
-    		
     		// pull recent blog posts announcements
     		s = plugin.conn.prepareStatement ("SELECT * FROM blog_posts WHERE TO_DAYS(NOW()) - TO_DAYS(date_created) < 7");
     		s.executeQuery();
     		ResultSet rs2 = s.getResultSet();
 
     		while(rs2.next()){
-    			String msg = ChatColor.GOLD + "[news]: " + ChatColor.RED + rs1.getString("title") + " http://dhmc.us/blog/";
+    			String msg = ChatColor.GOLD + "[news]: " + ChatColor.RED + rs2.getString("title") + " http://dhmc.us/blog/";
     			announces.add(msg);
 			}
     		rs2.close();

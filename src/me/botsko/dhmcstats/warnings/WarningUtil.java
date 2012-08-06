@@ -23,7 +23,7 @@ public class WarningUtil {
 	        java.util.Date date= new java.util.Date();
 	        String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
 			
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 	        PreparedStatement s = plugin.conn.prepareStatement("INSERT INTO warnings (username,reason,date_created,moderator) VALUES (?,?,?,?)");
 	        s.setString(1, username);
 	        s.setString(2, reason);
@@ -48,7 +48,7 @@ public class WarningUtil {
 		ArrayList<Warnings> warnings = new ArrayList<Warnings>();
 		try {
             
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 			
             PreparedStatement s;
     		s = plugin.conn.prepareStatement ("SELECT id, DATE_FORMAT(warnings.date_created,'%m/%d/%y') as warndate, reason, username, moderator FROM warnings WHERE username = ? AND deleted = 0");
@@ -79,7 +79,7 @@ public class WarningUtil {
 	 */
 	public static void deleteWarning( Dhmcstats plugin, int id ){
 		try {
-			if (plugin.conn == null || plugin.conn.isClosed() || !plugin.conn.isValid(1)) plugin.dbc();
+			plugin.dbc();
 	        PreparedStatement s = plugin.conn.prepareStatement("UPDATE warnings SET deleted = 1 WHERE id = ?");
 	        s.setInt(1, id);
 	        s.executeUpdate();

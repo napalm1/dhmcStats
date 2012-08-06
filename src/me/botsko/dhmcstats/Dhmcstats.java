@@ -11,6 +11,7 @@ package me.botsko.dhmcstats;
  * 
  */
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import me.botsko.dhmcstats.announcements.AnnouncementUtil;
+import me.botsko.dhmcstats.commands.FromCommandExecutor;
 import me.botsko.dhmcstats.commands.IsonCommandExecutor;
 import me.botsko.dhmcstats.commands.MacroCommandExecutor;
 import me.botsko.dhmcstats.commands.PlayedCommandExecutor;
@@ -48,7 +50,7 @@ import ru.tehkode.permissions.exceptions.RankingException;
 public class Dhmcstats extends JavaPlugin {
 	
 	Logger log = Logger.getLogger("Minecraft");
-	public java.sql.Connection conn;
+	public Connection conn = null;
 	public PermissionManager permissions;
 	int last_announcement = 0;
 	public Dhmcstats dhmc;
@@ -56,31 +58,37 @@ public class Dhmcstats extends JavaPlugin {
 	
 	/**
      * Connects to the MySQL database
+	 * @throws ClassNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @return true if we successfully connected to the db.
      */
-	public void dbc(){
+	public boolean dbc(){
 		
 		String mysql_user = this.getConfig().getString("mysql.username");
 		String mysql_pass = this.getConfig().getString("mysql.password");
 		String mysql_hostname = this.getConfig().getString("mysql.hostname");
 		String mysql_database = this.getConfig().getString("mysql.database");
 		String mysql_port = this.getConfig().getString("mysql.port");
-    	
-        java.util.Properties conProperties = new java.util.Properties();
-        conProperties.put("user", mysql_user );
-        conProperties.put("password", mysql_pass );
-        conProperties.put("autoReconnect", "true");
-        conProperties.put("maxReconnects", "3");
-        String uri = "jdbc:mysql://"+mysql_hostname+":"+mysql_port+"/"+mysql_database;
-        
-        try {
-        	conn = DriverManager.getConnection(uri, conProperties);
-        	if (conn == null || conn.isClosed() || !conn.isValid(1)){
-        		this.log("Mysql connection failed to open");
-        	}
-        } catch (SQLException e) {
-        	e.printStackTrace();
-        }
-    }
+		String dsn = ("jdbc:mysql://" + mysql_hostname + ":" + mysql_port + "/" + mysql_database);
+
+		try {
+			if (conn == null || conn.isClosed()) {
+				if ((mysql_user.equalsIgnoreCase("")) && (mysql_pass.equalsIgnoreCase(""))){
+					conn = DriverManager.getConnection(dsn);
+				} else {
+					conn = DriverManager.getConnection(dsn, mysql_user, mysql_pass);
+				}
+			}
+			if(conn == null || conn.isClosed()){
+				return false;
+			}
+			return true;
+		} catch (SQLException e) {
+			log("Error could not Connect to db " + dsn + ": " + e.getMessage());
+		}
+		return false;
+	}
 	
 	
 	/**
@@ -136,7 +144,7 @@ public class Dhmcstats extends JavaPlugin {
 		getCommand("warn").setExecutor( (CommandExecutor) new WarnCommandExecutor(this) );
 		getCommand("warnings").setExecutor( (CommandExecutor) new WarningsCommandExecutor(this) );
 		getCommand("z").setExecutor( (CommandExecutor) new MacroCommandExecutor(this) );
-		
+		getCommand("from").setExecutor( (CommandExecutor) new FromCommandExecutor(this) );
 		
 		/**
 		 * Scheduled events

@@ -1,6 +1,6 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.3
+version: 0.3.1
 softdepend: [PermissionsEx]
 commands:
    played:
@@ -39,3 +39,6 @@ commands:
    dhmc:
       description: For admins
       usage: /dhmc (sanity)
+   from:
+      description: Tell us where you heard about us!
+      usage: /from (how did you find out about dhmc?)
