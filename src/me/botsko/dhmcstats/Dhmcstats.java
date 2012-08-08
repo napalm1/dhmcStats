@@ -246,9 +246,8 @@ public class Dhmcstats extends JavaPlugin {
 						e.printStackTrace();
 					}
 		    	}
-			
 		    }
-		}, 18000L, 18000L);
+		}, 6000L, 6000L);
 	}
  
 	

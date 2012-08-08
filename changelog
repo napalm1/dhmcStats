@@ -75,5 +75,7 @@ Version 0.2.7
 - Added blog posts to announcements
 - Trusted doesn't force a wait of a full 24 hours, just the next day
 - Pulling alts from join_ips table, is much faster
-Version 0.2.8
+Version 0.3.0
+- Major refactor
+Version 0.3.1
 - Added lookup of possible alts for new players
