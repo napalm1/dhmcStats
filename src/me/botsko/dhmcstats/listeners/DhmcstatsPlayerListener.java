@@ -5,9 +5,11 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.joins.Alts;
 import me.botsko.dhmcstats.joins.JoinUtil;
 import me.botsko.dhmcstats.rank.Rank;
 import me.botsko.dhmcstats.rank.RankUtil;
+import me.botsko.dhmcstats.seen.SeenUtil;
 import me.botsko.dhmcstats.warnings.WarningUtil;
 import me.botsko.dhmcstats.warnings.Warnings;
 
@@ -54,17 +56,39 @@ public class DhmcstatsPlayerListener implements Listener {
     /**
      * Save the timestamp and player data upon the JOIN event
      * @throws RankingException 
+     * @throws ParseException 
      */
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerJoin(final PlayerJoinEvent event) throws RankingException {
+    public void onPlayerJoin(final PlayerJoinEvent event) throws RankingException, ParseException {
         
         Player player = event.getPlayer();
         String username = player.getName();
+        String ip = player.getAddress().getAddress().getHostAddress().toString();
+        
+        boolean has_seen = SeenUtil.hasPlayerBeenSeen(plugin, username);
+        
+        // Has the player been seen before?
+        if(!has_seen){
+        	
+        	List<Alts> alt_accts = JoinUtil.getPlayerAlts( plugin, username, ip );
+    		if(!alt_accts.isEmpty()){
+    			String alts_list = ChatColor.DARK_PURPLE + "";
+    			int i = 1;
+    			for(Alts alt : alt_accts){
+    				alts_list += alt.username + (i == alt_accts.size() ? "" : ", ");
+    				i++;
+    			}
+    			for(Player pl: plugin.getServer().getOnlinePlayers()) {
+            		if(pl.hasPermission("dhmcstats.warn")){
+            			pl.sendMessage( plugin.playerMsg(username + "'s alts: " + alts_list) );
+            		}
+            	}
+    		}
+        }
  
         // Save join date
         java.util.Date date= new java.util.Date();
         String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
-        String ip = player.getAddress().getAddress().getHostAddress().toString();
         JoinUtil.registerPlayerJoin( plugin, username, ts, ip, plugin.getOnlineCount() );
         
         // Check the user qualifies for any rank

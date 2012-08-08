@@ -133,7 +133,6 @@ public class PlayerCommandExecutor implements CommandExecutor  {
 		if(!alt_accts.isEmpty()){
 			for(Alts alt : alt_accts){
 				sender.sendMessage( plugin.playerMsg( "["+ alt.ip + "] " + ChatColor.GRAY + alt.username ));
-//				Bukkit.dispatchCommand(sender, "lookup " + alt.username);
 			}
 		}
     }

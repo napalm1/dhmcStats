@@ -19,6 +19,40 @@ public class SeenUtil {
 	 * @param account_name
 	 * @throws ParseException 
 	 */
+	public static boolean hasPlayerBeenSeen( Dhmcstats plugin, String username ) throws ParseException{
+		boolean seen = false;
+		try {
+			
+			plugin.dbc();
+            
+            PreparedStatement s;
+    		s = plugin.conn.prepareStatement ("SELECT id FROM joins WHERE username = ? ORDER BY player_join LIMIT 1;");
+    		s.setString(1, username);
+    		s.executeQuery();
+    		ResultSet rs = s.getResultSet();
+    		
+    		if(rs.first()){
+    			seen = true;
+    		}
+    		
+    		rs.close();
+    		s.close();
+            plugin.conn.close();
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+		return seen;
+	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 * @throws ParseException 
+	 */
 	public static Date getPlayerFirstSeen( Dhmcstats plugin, String username ) throws ParseException{
 		Date joined = null;
 		try {

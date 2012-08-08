@@ -274,4 +274,35 @@ public class JoinUtil {
         }
 		return accounts;
 	}
+	
+	
+	/**
+	 * 
+	 * @param person
+	 * @param account_name
+	 */
+	public static List<Alts> getPlayerAlts( Dhmcstats plugin, String username, String ip ){
+		ArrayList<Alts> accounts = new ArrayList<Alts>();
+		try {
+            
+			plugin.dbc();
+
+    			PreparedStatement s1;
+        		s1 = plugin.conn.prepareStatement ("SELECT DISTINCT(username) FROM joins WHERE ip = ? AND username != ?");
+        		s1.setString(1, ip);
+        		s1.setString(2, username);
+        		s1.executeQuery();
+        		ResultSet rs1 = s1.getResultSet();
+	        	while(rs1.next()){
+	    			accounts.add( new Alts(ip, rs1.getString("username")) );
+				}
+        		rs1.close();
+        		s1.close();
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Dhmcstats.disablePlugin();
+        }
+		return accounts;
+	}
 }
