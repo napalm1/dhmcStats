@@ -8,6 +8,7 @@ import org.bukkit.ChatColor;
 
 import me.botsko.dhmcstats.playtime.Playtime;
 import me.botsko.dhmcstats.rank.groups.Admin;
+import me.botsko.dhmcstats.rank.groups.Ambassador;
 import me.botsko.dhmcstats.rank.groups.EternalPlayer;
 import me.botsko.dhmcstats.rank.groups.Group;
 import me.botsko.dhmcstats.rank.groups.LeadModerator;
@@ -88,6 +89,7 @@ public class Rank {
 		dhmcRanks.put(UserGroup.Moderator, new Moderator());
 		dhmcRanks.put(UserGroup.LeadModerator, new LeadModerator());
 		dhmcRanks.put(UserGroup.Admin, new Admin());
+		dhmcRanks.put(UserGroup.Ambassador, new Ambassador());
 		dhmcRanks.put(UserGroup.Owner, new Owner());
 		
 		this.joined = joined;
@@ -148,11 +150,14 @@ public class Rank {
 			if(current_rank_in_ladder.getNiceName().equals("Owner")){
 				return (message_is_for_self ? "You're" : "Vive's") + " rank is Pure Awesome. Silly you, checking the owner's rank.";
 			}
+			else if(current_rank_in_ladder.getNiceName().equals("Ambassador")){
+				return (message_is_for_self ? "You sit" : username+" sits") + " on the Darkhelmet High Council.";
+			}
 			else if(current_rank_in_ladder.getNiceName().equals("Admin")){
-				return (message_is_for_self ? "You're" : username+" is") + " an admin. Nowhere to go...";
+				return (message_is_for_self ? "You're" : username+" is") + " an admin.";
 			}
 			else if(!next_rank_in_ladder.mayBeAutoPromotedTo()){
-				return (message_is_for_self ? "You're" : username+" is") + " "+current_rank_in_ladder.getNiceName()+". A promotion is up to Vive";
+				return (message_is_for_self ? "You're" : username+" is") + " "+current_rank_in_ladder.getNiceName()+". A promotion is up to the Council";
 			} else {
 				
 		    	int remain_days = (next_rank_in_ladder.getDaysRequired() - days_since_join);
