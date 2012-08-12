@@ -66,9 +66,9 @@ public class DhmcstatsPlayerListener implements Listener {
         String username = player.getName();
         String ip = player.getAddress().getAddress().getHostAddress().toString();
         
-        //Check if the player is New/Trusted, if so, show alts.
+        // Check if the player is New/Trusted, if so, show alts.
         Rank rank = RankUtil.getPlayerRank( plugin, username );
-        if(rank.getCurrentRank() == UserGroup.TrustedPlayer|| rank.getCurrentRank() == UserGroup.Player){
+        if(rank.getCurrentRank() == UserGroup.TrustedPlayer || rank.getCurrentRank() == UserGroup.Player){
         	
         	List<Alts> alt_accts = JoinUtil.getPlayerAlts( plugin, username, ip );
     		if(!alt_accts.isEmpty()){
