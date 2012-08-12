@@ -1,5 +1,7 @@
 package me.botsko.dhmcstats.rank.groups;
 
+import org.bukkit.ChatColor;
+
 public class Admin extends Group {
 	
 	/**
@@ -16,6 +18,15 @@ public class Admin extends Group {
 	 * @return
 	 */
 	public Group getNextRank(){
-		return new Owner();
+		return new Ambassador();
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public ChatColor getColor() {
+		return ChatColor.DARK_PURPLE;
 	}
 }

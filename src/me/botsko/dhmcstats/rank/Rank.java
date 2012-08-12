@@ -68,6 +68,11 @@ public class Rank {
 	 */
 	protected HashMap<UserGroup,Group> dhmcRanks = new HashMap<UserGroup,Group>();
 	
+	/**
+	 * 
+	 */
+	protected ChatColor rank_color;
+	
 	
 	/**
 	 * 
@@ -101,6 +106,7 @@ public class Rank {
 		// Pull the group the user is in now
 		UserGroup current = getCurrentRank();
 		current_rank_in_ladder = dhmcRanks.get( current );
+		this.rank_color = current_rank_in_ladder.getColor();
 		
 		// Pull the next rank
 		next_rank_in_ladder = current_rank_in_ladder.getNextRank();
@@ -122,6 +128,10 @@ public class Rank {
 	 */
 	public boolean getPlayerQualifiesForPromo(){
 		return player_qualifies_for_promo;
+	}
+	
+	public ChatColor getRankColor(){
+		return rank_color;
 	}
 	
 	
@@ -239,7 +249,7 @@ public class Rank {
 	 * 
 	 * @return
 	 */
-	protected UserGroup getCurrentRank(){
+	public UserGroup getCurrentRank(){
 		for(String group : permissions_groups){
 			if(userGroupExists(group)){
 				UserGroup g = UserGroup.valueOf(group);

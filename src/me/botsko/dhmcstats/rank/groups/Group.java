@@ -1,11 +1,14 @@
 package me.botsko.dhmcstats.rank.groups;
 
+import org.bukkit.ChatColor;
+
 public class Group {
 	
 	protected boolean may_auto_promo_to = false;
 	protected String nice_name = "";
 	protected int hours_required = 0;
 	protected int days_required = 0;
+	protected ChatColor rank_color = null;
 	
 	
 	/**
@@ -46,6 +49,11 @@ public class Group {
 	 * @return
 	 */
 	public Group getNextRank(){
+		return null;
+	}
+
+
+	public ChatColor getColor() {
 		return null;
 	}
 }
