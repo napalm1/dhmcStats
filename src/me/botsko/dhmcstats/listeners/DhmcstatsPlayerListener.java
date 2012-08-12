@@ -10,7 +10,6 @@ import me.botsko.dhmcstats.joins.JoinUtil;
 import me.botsko.dhmcstats.rank.Rank;
 import me.botsko.dhmcstats.rank.RankUtil;
 import me.botsko.dhmcstats.rank.UserGroup;
-import me.botsko.dhmcstats.seen.SeenUtil;
 import me.botsko.dhmcstats.warnings.WarningUtil;
 import me.botsko.dhmcstats.warnings.Warnings;
 
@@ -47,10 +46,13 @@ public class DhmcstatsPlayerListener implements Listener {
     public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
         String cmd = event.getMessage();
+        if(cmd.startsWith("/ban") || cmd.startsWith("/tempban"))
+        	event.setMessage(cmd + " (Banner: " + player + ")");
         double x = Math.floor( player.getLocation().getX() );
         double y = Math.floor( player.getLocation().getY() );
         double z = Math.floor( player.getLocation().getZ() );
         plugin.log( "[Command] " + player.getName() + " " + cmd + " @" + player.getWorld().getName() + " x:" + x + " y:" + y + " z:" + z);
+        
     }
     
     
