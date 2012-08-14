@@ -47,7 +47,7 @@ public class DhmcstatsPlayerListener implements Listener {
         Player player = event.getPlayer();
         String cmd = event.getMessage();
         if(cmd.startsWith("/ban") || cmd.startsWith("/tempban"))
-        	event.setMessage(cmd + " (Banner: " + player + ")");
+        	event.setMessage(cmd + " (Banner: " + player.getDisplayName() + ")");
         double x = Math.floor( player.getLocation().getX() );
         double y = Math.floor( player.getLocation().getY() );
         double z = Math.floor( player.getLocation().getZ() );
