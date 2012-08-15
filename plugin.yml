@@ -1,6 +1,6 @@
 name: dhmcStats
 main: me.botsko.dhmcstats.Dhmcstats
-version: 0.3.1
+version: 0.3.2
 softdepend: [PermissionsEx]
 commands:
    played:
@@ -24,9 +24,6 @@ commands:
    ison:
       description: Checks if the user is online.
       usage: /ison [player]
-   scores:
-      description: Checks the newmod scores of a users
-      usage: /scores [player]
    warn:
       description: File an official warning against a player
       usage: /warn [player] [reason]
