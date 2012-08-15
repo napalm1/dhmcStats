@@ -85,3 +85,4 @@ Version 0.3.2
 - Added rank color to player alts
 - removed /lookup from /player
 - Added basic ban recording for use on the website
+- Added /z list for admins to list all current macros.

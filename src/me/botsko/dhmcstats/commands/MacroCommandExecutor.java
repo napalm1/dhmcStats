@@ -38,6 +38,7 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		macros.put("site", "&dOur website: http://dhmc.us - Forums, news, gallery, contests, and more! Create account here: http://dhmc.us/users/signup/");
 		macros.put("donate", "&dDonate at our site by going to http://www.dhmc.us/help/donate/");
 		macros.put("see", "&dSorry Vive can't see your stuff. We just have too many people asking. Submit it as a Creation on the site!");
+		macros.put("plugins", "&dNeed help for Craftys, DarkMythos, etc? http://dhmc.us/wiki/");
 		
 	}
 	
@@ -76,7 +77,7 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	 */
 	public void listMacros( Player player ){
 		for (Entry<String, String> entry : macros.entrySet()){
-		    player.sendMessage(entry.getKey().toString() + ": " + plugin.colorize(entry.getValue().toString()));
+		    player.sendMessage( ChatColor.GOLD + entry.getKey().toString() + ": " + plugin.colorize( entry.getValue().toString().substring(0, 35) + "..." ));
 		}
 	}
 	
