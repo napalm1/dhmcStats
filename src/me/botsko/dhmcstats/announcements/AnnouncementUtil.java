@@ -46,7 +46,7 @@ public class AnnouncementUtil {
     		rs1.close();
     		
     		// pull recent blog posts announcements
-    		s = plugin.conn.prepareStatement ("SELECT * FROM blog_posts WHERE TO_DAYS(NOW()) - TO_DAYS(date_created) < 7");
+    		s = plugin.conn.prepareStatement ("SELECT * FROM blog_posts WHERE TO_DAYS(NOW()) - TO_DAYS(date_created) < 3");
     		s.executeQuery();
     		ResultSet rs2 = s.getResultSet();
 

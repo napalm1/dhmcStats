@@ -24,9 +24,6 @@ commands:
    ison:
       description: Checks if the user is online.
       usage: /ison [player]
-   scores:
-      description: Checks the newmod scores of a users
-      usage: /scores [player]
    warn:
       description: File an official warning against a player
       usage: /warn [player] [reason]
