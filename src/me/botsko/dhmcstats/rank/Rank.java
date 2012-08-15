@@ -162,6 +162,19 @@ public class Rank {
 				
 		    	int remain_days = (next_rank_in_ladder.getDaysRequired() - days_since_join);
 				int remain_hrs = (next_rank_in_ladder.getHoursRequired() - playtime.getHours());
+				int remain_minutes = 60 - playtime.getMinutes();
+				
+				// 1 hour doesn't count, since we show minutes
+				int display_remain_hrs = (remain_hrs-1);
+				
+				String remain_hrs_mins = display_remain_hrs+" hours, " + remain_minutes + " minutes";
+				if(display_remain_hrs == 0){
+					remain_hrs_mins = remain_minutes + " minutes";
+				}
+				if(remain_minutes == 0){
+					remain_hrs_mins = display_remain_hrs + " hours";
+				}
+				
 		
 				// If days remain, but no hours
 				String time_left = " You need to play " + remain_hrs + " hours over at least "+remain_days+" days for " + next_rank_in_ladder.getNiceName();
@@ -170,17 +183,17 @@ public class Rank {
 				}
 				// If hours remain, but no days
 				if(remain_days <= 0 && remain_hrs > 0){
-					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime. "+(message_is_for_self ? "You meet" : username+" meets")+" the minimum days requirement.";
+					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs_mins+" of playtime. "+(message_is_for_self ? "You meet" : username+" meets")+" the minimum days requirement.";
 				}
 				// If both remain
 				if(remain_days > 0 && remain_hrs > 0){
-					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime, in at least " + remain_days + " more days (since joined).";
+					time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs_mins+" of playtime, in at least " + remain_days + " more days (since joined).";
 				}
 				// If trying to rank to trusted, check for the day after
 				if(next_rank_in_ladder.getNiceName().equalsIgnoreCase("trusted")){
 					if(days_since_join == 0){
 						if(remain_hrs > 0){
-							time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs+" hours of playtime, but joined today. Promotion tomorrow.";
+							time_left = next_rank_in_ladder.getNiceName()+" in "+remain_hrs_mins+" of playtime, but joined today. Promotion tomorrow.";
 						} else {
 							time_left = (message_is_for_self ? "You've" : username+" has") + " played enough for " + next_rank_in_ladder.getNiceName()+", but joined today. Promotion tomorrow.";
 						}

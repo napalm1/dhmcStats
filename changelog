@@ -79,3 +79,6 @@ Version 0.3.0
 - Major refactor
 Version 0.3.1
 - Added lookup of possible alts for new players
+Version 0.3.2
+- Began changing how mysql connections are handled. Scheduled code now opens their own connections.
+- Adding minutes to /rank so people aren't confused by rounded hours.
