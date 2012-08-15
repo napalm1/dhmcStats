@@ -1,5 +1,9 @@
 package me.botsko.dhmcstats.commands;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import me.botsko.dhmcstats.Dhmcstats;
 
 import org.bukkit.ChatColor;
@@ -10,6 +14,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.IllegalPluginAccessException;
 
 public class MacroCommandExecutor implements CommandExecutor  {
+	
+	protected Map<String, String> macros = new HashMap<String, String>();
 	
 	/**
 	 * 
@@ -23,6 +29,16 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	 */
 	public MacroCommandExecutor(Dhmcstats plugin) {
 		this.plugin = plugin;
+		
+		macros.put("promo", "&dRank and Promotion Questions? Please read: http://dhmc.us/help/promo");
+		macros.put("mods", "&dRemembers, staff can answer your questions too, and they're less busy than Vive.");
+		macros.put("ban", "&dBan appeals go on the forums. Admins do not handle appeals here.");
+		macros.put("myth", "&dThink you qualify for myth? File a modreq stating your qualifications. Find them here: http://dhmc.us/help/promo");
+		macros.put("poi", "&dSubmit your creation on our website (dhmc.us). Staff vote them up/down. 15 votes you win a Point of Interest.");
+		macros.put("site", "&dOur website: http://dhmc.us - Forums, news, gallery, contests, and more! Create account here: http://dhmc.us/users/signup/");
+		macros.put("donate", "&dDonate at our site by going to http://www.dhmc.us/help/donate/");
+		macros.put("see", "&dSorry Vive can't see your stuff. We just have too many people asking. Submit it as a Creation on the site!");
+		
 	}
 	
 	
@@ -40,7 +56,12 @@ public class MacroCommandExecutor implements CommandExecutor  {
 			Player player = (Player) sender;
 			if(player.hasPermission("dhmcstats.macro")){
 				if(args.length == 1){
-					getMacro(args[0]);
+					
+					if(args[0].equalsIgnoreCase("list")){
+						listMacros( player );
+					} else {
+						getMacro(args[0]);
+					}
 					return true;
 				}
 			}
@@ -51,40 +72,24 @@ public class MacroCommandExecutor implements CommandExecutor  {
 	
 	/**
 	 * 
+	 * @param player
+	 */
+	public void listMacros( Player player ){
+		for (Entry<String, String> entry : macros.entrySet()){
+		    player.sendMessage(entry.getKey().toString() + ": " + plugin.colorize(entry.getValue().toString()));
+		}
+	}
+	
+	
+	/**
+	 * 
 	 * @param username
 	 * @param reason
 	 * @param reporter
 	 */
 	protected void getMacro(String choice){
-		
-		if(choice.equalsIgnoreCase("promo")){
-			say("&dRank and Promotion Questions? Please read: http://dhmc.us/help/promo");
-		}
-//		if(choice.equalsIgnoreCase("faq")){
-//			say("&dMap Change Questions? Please read: http://dhmc.us/help/faq");
-//		}
-		if(choice.equalsIgnoreCase("mods")){
-			say("&dVive isn't the only mod here. ;)");
-		}
-		if(choice.equalsIgnoreCase("ban")){
-			say("&dBan appeals go on the forums. Admins do not handle appeals here.");
-		}
-		if(choice.equalsIgnoreCase("myth")){
-			say("&dThink you qualify for myth? File a modreq stating your qualifications. Find them here: http://dhmc.us/help/promo/#mythical");
-		}
-		if(choice.equalsIgnoreCase("poi")){
-			say("&dSubmit your creation on our website (dhmc.us). Staff vote them up/down. 15 votes you win a Point of Interest.");
-		}
-		if(choice.equalsIgnoreCase("website")){
-			say("&dOur website: http://dhmc.us - Forums, news, gallery, contests, and more! Create account here: http://dhmc.us/users/signup/");
-		}
-		
-		// Temporary ones
-		if(choice.equalsIgnoreCase("reset")){
-			say("&dSounds like you didn't read the Seriously Important 1.3 Guide: http://bit.ly/S6HYY5");
-		}
-		if(choice.equalsIgnoreCase("donate")){
-			say("&dDonate at our site by going to http://www.dhmc.us/help/donate/");	 
+		if(macros.containsKey(choice)){
+			say(macros.get(choice));
 		}
 	}
 	
