@@ -82,3 +82,6 @@ Version 0.3.1
 Version 0.3.2
 - Began changing how mysql connections are handled. Scheduled code now opens their own connections.
 - Adding minutes to /rank so people aren't confused by rounded hours.
+- Added rank color to player alts
+- removed /lookup from /player
+- Added basic ban recording for use on the website
