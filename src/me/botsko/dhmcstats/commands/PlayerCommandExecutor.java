@@ -7,6 +7,7 @@ import java.util.List;
 import me.botsko.dhmcstats.Dhmcstats;
 import me.botsko.dhmcstats.joins.Alts;
 import me.botsko.dhmcstats.joins.JoinUtil;
+import me.botsko.dhmcstats.rank.RankUtil;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -105,7 +106,6 @@ public class PlayerCommandExecutor implements CommandExecutor  {
     	PlayedCommandExecutor played = new PlayedCommandExecutor(plugin);
     	played.checkPlayTime(username, sender);
     	
-    	Bukkit.dispatchCommand(sender, "lookup " + username);
     	Bukkit.dispatchCommand(sender, "warnings " + username);
     	
     	PermissionUser user = plugin.permissions.getUser( username );
@@ -132,7 +132,11 @@ public class PlayerCommandExecutor implements CommandExecutor  {
 		List<Alts> alt_accts = JoinUtil.getPlayerAlts( plugin, username );
 		if(!alt_accts.isEmpty()){
 			for(Alts alt : alt_accts){
-				sender.sendMessage( plugin.playerMsg( "["+ alt.ip + "] " + ChatColor.GRAY + alt.username ));
+				try {
+					sender.sendMessage( plugin.playerMsg( "["+ alt.ip + "] " + RankUtil.getPlayerRank(plugin, alt.username).getRankColor() + alt.username ));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
 			}
 		}
     }

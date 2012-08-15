@@ -1,5 +1,7 @@
 package me.botsko.dhmcstats.rank.groups;
 
+import org.bukkit.ChatColor;
+
 public class LegendaryPlayer extends Group {
 	
 	/**
@@ -19,5 +21,14 @@ public class LegendaryPlayer extends Group {
 	 */
 	public Group getNextRank(){
 		return new MythicalPlayer();
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public ChatColor getColor() {
+		return ChatColor.DARK_BLUE;
 	}
 }

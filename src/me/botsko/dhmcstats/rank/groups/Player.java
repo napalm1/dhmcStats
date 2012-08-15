@@ -1,5 +1,7 @@
 package me.botsko.dhmcstats.rank.groups;
 
+import org.bukkit.ChatColor;
+
 public class Player extends Group {
 
 	
@@ -17,5 +19,14 @@ public class Player extends Group {
 	 */
 	public Group getNextRank(){
 		return new TrustedPlayer();
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public ChatColor getColor() {
+		return ChatColor.GRAY;
 	}
 }

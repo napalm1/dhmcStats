@@ -9,7 +9,7 @@ import me.botsko.dhmcstats.joins.Alts;
 import me.botsko.dhmcstats.joins.JoinUtil;
 import me.botsko.dhmcstats.rank.Rank;
 import me.botsko.dhmcstats.rank.RankUtil;
-import me.botsko.dhmcstats.seen.SeenUtil;
+import me.botsko.dhmcstats.rank.UserGroup;
 import me.botsko.dhmcstats.warnings.WarningUtil;
 import me.botsko.dhmcstats.warnings.Warnings;
 
@@ -46,10 +46,13 @@ public class DhmcstatsPlayerListener implements Listener {
     public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
         String cmd = event.getMessage();
+        if(cmd.startsWith("/ban") || cmd.startsWith("/tempban"))
+        	event.setMessage(cmd + " (Banner: " + player.getDisplayName() + ")");
         double x = Math.floor( player.getLocation().getX() );
         double y = Math.floor( player.getLocation().getY() );
         double z = Math.floor( player.getLocation().getZ() );
         plugin.log( "[Command] " + player.getName() + " " + cmd + " @" + player.getWorld().getName() + " x:" + x + " y:" + y + " z:" + z);
+        
     }
     
     
@@ -65,17 +68,16 @@ public class DhmcstatsPlayerListener implements Listener {
         String username = player.getName();
         String ip = player.getAddress().getAddress().getHostAddress().toString();
         
-        boolean has_seen = SeenUtil.hasPlayerBeenSeen(plugin, username);
-        
-        // Has the player been seen before?
-        if(!has_seen){
+        // Check if the player is New/Trusted, if so, show alts.
+        Rank rank = RankUtil.getPlayerRank( plugin, username );
+        if(rank.getCurrentRank() == UserGroup.TrustedPlayer || rank.getCurrentRank() == UserGroup.Player){
         	
         	List<Alts> alt_accts = JoinUtil.getPlayerAlts( plugin, username, ip );
     		if(!alt_accts.isEmpty()){
-    			String alts_list = ChatColor.DARK_PURPLE + "";
+    			String alts_list = "";
     			int i = 1;
     			for(Alts alt : alt_accts){
-    				alts_list += alt.username + (i == alt_accts.size() ? "" : ", ");
+    				alts_list += RankUtil.getPlayerRank( plugin, alt.username ).getRankColor() + alt.username + (i == alt_accts.size() ? "" : ", ");
     				i++;
     			}
     			for(Player pl: plugin.getServer().getOnlinePlayers()) {
@@ -91,23 +93,17 @@ public class DhmcstatsPlayerListener implements Listener {
         String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
         JoinUtil.registerPlayerJoin( plugin, username, ts, ip, plugin.getOnlineCount() );
         
-        // Check the user qualifies for any rank
-        try {
-			Rank rank = RankUtil.getPlayerRank( plugin, username );
-			if(rank.getPlayerQualifiesForPromo()){
-				
-				// auto promote
-				plugin.permissions.getUser(username).promote( plugin.permissions.getUser("viveleroi"), "default" );
-				
-				// announce the promotion
-				plugin.messageAllPlayers( plugin.playerMsg( "Congratulations, " + ChatColor.AQUA + username + ChatColor.WHITE + " on your promotion to " + ChatColor.AQUA + rank.getNextRank().getNiceName() ) );
-				
-				// log the promotion
-				plugin.log("Auto promoted " + username + " to " + rank.getNextRank().getNiceName());
-				
-			}
-		} catch (ParseException e) {
-			e.printStackTrace();
+        if(rank.getPlayerQualifiesForPromo()){
+			
+			// auto promote
+			plugin.permissions.getUser(username).promote( plugin.permissions.getUser("viveleroi"), "default" );
+			
+			// announce the promotion
+			plugin.messageAllPlayers( plugin.playerMsg( "Congratulations, " + ChatColor.AQUA + username + ChatColor.WHITE + " on your promotion to " + ChatColor.AQUA + rank.getNextRank().getNiceName() ) );
+			
+			// log the promotion
+			plugin.log("Auto promoted " + username + " to " + rank.getNextRank().getNiceName());
+			
 		}
         
         
