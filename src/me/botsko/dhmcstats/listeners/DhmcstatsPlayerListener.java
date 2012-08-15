@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.bans.BanUtil;
 import me.botsko.dhmcstats.joins.Alts;
 import me.botsko.dhmcstats.joins.JoinUtil;
 import me.botsko.dhmcstats.rank.Rank;
@@ -44,10 +45,24 @@ public class DhmcstatsPlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH)
     public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
+    	
         Player player = event.getPlayer();
         String cmd = event.getMessage();
-        if(cmd.startsWith("/ban") || cmd.startsWith("/tempban"))
-        	event.setMessage(cmd + " (Banner: " + player.getDisplayName() + ")");
+        
+        // If we're banning someone, file it
+        if (cmd.startsWith("/ban ")){
+        	String[] args = cmd.split(" ");
+        	if(args.length >= 3){
+        		String banned_player = args[1];
+        		String reason = "";
+				for (int i = 2; i < args.length; i = i + 1){
+					reason += args[i]+" ";
+				}
+				BanUtil.recordBan(plugin, banned_player, player.getName(), reason);
+        	}
+        }
+        
+        // Log the location
         double x = Math.floor( player.getLocation().getX() );
         double y = Math.floor( player.getLocation().getY() );
         double z = Math.floor( player.getLocation().getZ() );
