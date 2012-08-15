@@ -1,5 +1,6 @@
 package me.botsko.dhmcstats.playtime;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,6 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.Mysql;
 
 public class PlaytimeUtil {
 
@@ -24,11 +26,12 @@ public class PlaytimeUtil {
 	public static Playtime getPlaytime( Dhmcstats plugin, String username ) throws ParseException{
 		try {
 			
-			plugin.dbc();
+			Mysql mysql = new Mysql(plugin.mysql_user, plugin.mysql_pass, plugin.mysql_hostname, plugin.mysql_database, plugin.mysql_port);
+			Connection conn = mysql.getConn();
 			
 			// query for the null quit record for this player
 			PreparedStatement s;
-			s = plugin.conn.prepareStatement ("SELECT SUM(playtime) as playtime FROM joins WHERE username = ?");
+			s = conn.prepareStatement ("SELECT SUM(playtime) as playtime FROM joins WHERE username = ?");
 			s.setString(1, username);
 			s.executeQuery();
 			ResultSet rs = s.getResultSet();
@@ -39,7 +42,7 @@ public class PlaytimeUtil {
 				
 				// We also need to pull any incomplete join and calc up-to-the-minute playtime
 				PreparedStatement s1;
-				s1 = plugin.conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? AND player_quit IS NULL");
+				s1 = conn.prepareStatement ("SELECT player_join FROM joins WHERE username = ? AND player_quit IS NULL");
 				s1.setString(1, username);
 				s1.executeQuery();
 				ResultSet rs1 = s1.getResultSet();
@@ -47,11 +50,9 @@ public class PlaytimeUtil {
 				long session_hours = 0;
 				try {
 					if(rs1.first()){
-						String session_started = rs1.getString("player_join");
-						
 						DateFormat formatter ;
 				    	formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				    	Date joined = (Date)formatter.parse( session_started );
+				    	Date joined = (Date)formatter.parse( rs1.getString("player_join") );
 				    	Date today = new Date();
 				    	session_hours = today.getTime() - joined.getTime();
 				    	session_hours = session_hours / 1000;
@@ -73,7 +74,7 @@ public class PlaytimeUtil {
 			
 			rs.close();
 			s.close();
-			plugin.conn.close();
+			conn.close();
 			return null;
 
         } catch (SQLException e) {

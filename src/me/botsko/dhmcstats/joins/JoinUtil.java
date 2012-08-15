@@ -1,5 +1,6 @@
 package me.botsko.dhmcstats.joins;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.Mysql;
 
 public class JoinUtil {
 
@@ -172,7 +174,8 @@ public class JoinUtil {
 	protected static void forceDateForOfflinePlayers( Dhmcstats plugin, String users ){
 		try {
 			
-			plugin.dbc();
+			Mysql mysql = new Mysql(plugin.mysql_user, plugin.mysql_pass, plugin.mysql_hostname, plugin.mysql_database, plugin.mysql_port);
+			Connection conn = mysql.getConn();
 			
 			if(!users.isEmpty()){
 				users = " AND username NOT IN ("+users+")";
@@ -181,10 +184,10 @@ public class JoinUtil {
             java.util.Date date= new java.util.Date();
     		String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
 			String str = String.format("UPDATE joins SET player_quit = '%s' WHERE player_quit IS NULL%s", ts, users);
-	        PreparedStatement s = plugin.conn.prepareStatement( str );
+	        PreparedStatement s = conn.prepareStatement( str );
     		s.executeUpdate();
     		s.close();
-            plugin.conn.close();
+            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             Dhmcstats.disablePlugin();
@@ -200,14 +203,15 @@ public class JoinUtil {
 	protected static void forcePlaytimeForOfflinePlayers( Dhmcstats plugin, String users ){
 		try {
 			
-			plugin.dbc();
+			Mysql mysql = new Mysql(plugin.mysql_user, plugin.mysql_pass, plugin.mysql_hostname, plugin.mysql_database, plugin.mysql_port);
+			Connection conn = mysql.getConn();
 			
 			if(!users.isEmpty()){
 				users = " AND username NOT IN ("+users+")";
 			}
             
 			String str = String.format("SELECT id, TIME_TO_SEC(TIMEDIFF(player_quit,player_join)) AS playtime FROM joins WHERE playtime IS NULL%s", users);
-	        PreparedStatement s = plugin.conn.prepareStatement( str );
+	        PreparedStatement s = conn.prepareStatement( str );
     		s.executeQuery();
 			ResultSet trs = s.getResultSet();
 			// Update all null playtime records with playtime
@@ -215,13 +219,13 @@ public class JoinUtil {
 				Integer id = trs.getInt(1);
 				int playtime = trs.getInt(2);
 				String upd1 = String.format("UPDATE joins SET playtime = '%s' WHERE id = '%d'", playtime, id);
-				PreparedStatement pstmt1 = plugin.conn.prepareStatement(upd1);
+				PreparedStatement pstmt1 = conn.prepareStatement(upd1);
 				pstmt1.executeUpdate();
 				pstmt1.close();
 			}
 			trs.close();
     		s.close();
-            plugin.conn.close();
+            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             Dhmcstats.disablePlugin();

@@ -12,8 +12,6 @@ package me.botsko.dhmcstats;
  */
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -49,44 +47,28 @@ import ru.tehkode.permissions.exceptions.RankingException;
 public class Dhmcstats extends JavaPlugin {
 	
 	Logger log = Logger.getLogger("Minecraft");
-	public Connection conn = null;
 	public PermissionManager permissions;
 	int last_announcement = 0;
 	public Dhmcstats dhmc;
+	
+	public Connection conn = null;
+	public String mysql_user;
+	public String mysql_pass;
+	public String mysql_hostname;
+	public String mysql_database;
+	public String mysql_port;
     
 	
 	/**
-     * Connects to the MySQL database
+     * Setup a generic connection all non-scheduled methods may share
 	 * @throws ClassNotFoundException 
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
 	 * @return true if we successfully connected to the db.
      */
-	public boolean dbc(){
-		
-		String mysql_user = this.getConfig().getString("mysql.username");
-		String mysql_pass = this.getConfig().getString("mysql.password");
-		String mysql_hostname = this.getConfig().getString("mysql.hostname");
-		String mysql_database = this.getConfig().getString("mysql.database");
-		String mysql_port = this.getConfig().getString("mysql.port");
-		String dsn = ("jdbc:mysql://" + mysql_hostname + ":" + mysql_port + "/" + mysql_database);
-
-		try {
-			if (conn == null || conn.isClosed()) {
-				if ((mysql_user.equalsIgnoreCase("")) && (mysql_pass.equalsIgnoreCase(""))){
-					conn = DriverManager.getConnection(dsn);
-				} else {
-					conn = DriverManager.getConnection(dsn, mysql_user, mysql_pass);
-				}
-			}
-			if(conn == null || conn.isClosed()){
-				return false;
-			}
-			return true;
-		} catch (SQLException e) {
-			log("Error could not Connect to db " + dsn + ": " + e.getMessage());
-		}
-		return false;
+	public void dbc(){
+		Mysql mysql = new Mysql(mysql_user, mysql_pass, mysql_hostname, mysql_database, mysql_port);
+		conn = mysql.getConn();
 	}
 	
 	
@@ -103,6 +85,12 @@ public class Dhmcstats extends JavaPlugin {
 		this.getConfig().set("mysql.password", 	this.getConfig().getString("mysql.password", ""));
 		
 		saveConfig();
+		
+		mysql_user = this.getConfig().getString("mysql.username");
+		mysql_pass = this.getConfig().getString("mysql.password");
+		mysql_hostname = this.getConfig().getString("mysql.hostname");
+		mysql_database = this.getConfig().getString("mysql.database");
+		mysql_port = this.getConfig().getString("mysql.port");
 		
 	}
 

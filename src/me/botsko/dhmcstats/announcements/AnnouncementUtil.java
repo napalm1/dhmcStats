@@ -1,5 +1,6 @@
 package me.botsko.dhmcstats.announcements;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.botsko.dhmcstats.Dhmcstats;
+import me.botsko.dhmcstats.Mysql;
 
 import org.bukkit.ChatColor;
 
@@ -22,9 +24,11 @@ public class AnnouncementUtil {
 		ArrayList<String> announces = new ArrayList<String>();
 		try {
             
-			plugin.dbc();
+			Mysql mysql = new Mysql(plugin.mysql_user, plugin.mysql_pass, plugin.mysql_hostname, plugin.mysql_database, plugin.mysql_port);
+			Connection conn = mysql.getConn();
+			
             PreparedStatement s;
-    		s = plugin.conn.prepareStatement ("SELECT announcement FROM announcements WHERE is_active = 1");
+    		s = conn.prepareStatement ("SELECT announcement FROM announcements WHERE is_active = 1");
     		s.executeQuery();
     		ResultSet rs = s.getResultSet();
 
@@ -35,7 +39,7 @@ public class AnnouncementUtil {
     		rs.close();
     		
     		// pull forum announcements
-    		s = plugin.conn.prepareStatement ("SELECT * FROM posts WHERE category_id = 9 AND announcement = 1 AND closed = 0 AND hidden = 0");
+    		s = conn.prepareStatement ("SELECT * FROM posts WHERE category_id = 9 AND announcement = 1 AND closed = 0 AND hidden = 0");
     		s.executeQuery();
     		ResultSet rs1 = s.getResultSet();
 
@@ -46,7 +50,7 @@ public class AnnouncementUtil {
     		rs1.close();
     		
     		// pull recent blog posts announcements
-    		s = plugin.conn.prepareStatement ("SELECT * FROM blog_posts WHERE TO_DAYS(NOW()) - TO_DAYS(date_created) < 3");
+    		s = conn.prepareStatement ("SELECT * FROM blog_posts WHERE TO_DAYS(NOW()) - TO_DAYS(date_created) < 3");
     		s.executeQuery();
     		ResultSet rs2 = s.getResultSet();
 
@@ -57,7 +61,7 @@ public class AnnouncementUtil {
     		rs2.close();
     		
     		s.close();
-            plugin.conn.close();
+            conn.close();
             
         } catch (SQLException e) {
             e.printStackTrace();
