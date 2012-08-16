@@ -31,7 +31,7 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		this.plugin = plugin;
 		
 		macros.put("promo", "&dRank and Promotion Questions? Please read: http://dhmc.us/help/promo");
-		macros.put("mods", "&dRemembers, staff can answer your questions too, and they're less busy than Vive.");
+		macros.put("mods", "&dRemember, staff can answer your questions too, and they're less busy than Vive.");
 		macros.put("ban", "&dBan appeals go on the forums. Admins do not handle appeals here.");
 		macros.put("myth", "&dThink you qualify for myth? File a modreq stating your qualifications. Find them here: http://dhmc.us/help/promo");
 		macros.put("poi", "&dSubmit your creation on our website (dhmc.us). Staff vote them up/down. 15 votes you win a Point of Interest.");
@@ -39,6 +39,9 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		macros.put("donate", "&dDonate at our site by going to http://www.dhmc.us/help/donate/");
 		macros.put("see", "&dSorry Vive can't see your stuff. We just have too many people asking. Submit it as a Creation on the site!");
 		macros.put("plugins", "&dNeed help for Craftys, DarkMythos, etc? http://dhmc.us/wiki/");
+		macros.put("napalm", "&dWhatever happens, napalm1 didn't do it. ;)");
+		macros.put("rules", "&dMake sure you read the rules at http://www.dhmc.us/help/rules");
+		macros.put("snowy", "&dHave feedback, a suggestion, or a problem? Report it at http://bit.ly/Nse5O5");
 		
 	}
 	
