@@ -39,7 +39,6 @@ public class MacroCommandExecutor implements CommandExecutor  {
 		macros.put("donate", "&dDonate at our site by going to http://www.dhmc.us/help/donate/");
 		macros.put("see", "&dSorry Vive can't see your stuff. We just have too many people asking. Submit it as a Creation on the site!");
 		macros.put("plugins", "&dNeed help for Craftys, DarkMythos, etc? http://dhmc.us/wiki/");
-		macros.put("napalm", "&dWhatever happens, napalm1 didn't do it. ;)");
 		macros.put("rules", "&dMake sure you read the rules at http://www.dhmc.us/help/rules");
 		macros.put("snowy", "&dHave feedback, a suggestion, or a problem? Report it at http://bit.ly/Nse5O5");
 		
